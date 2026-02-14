@@ -1,5 +1,7 @@
 ![PowerFox](https://github.com/user-attachments/assets/35623fd8-1887-4976-ae16-cf85ca800a8c)
 
+<img src="https://powerfox.jazzzny.me/assets/img/2026-01-28-powerfox-ppc.jpg" alt="PowerFox screenshot" style="max-width: 400px;">
+
 PowerFox is a secure, modern, and open-source web browser for Mac OS X 10.6 Snow Leopard and 10.5 Leopard, based on the open-source UXP browser engine and Basilisk browser codebases.
 
 For more information, visit the [PowerFox website](https://powerfox.jazzzny.me).
