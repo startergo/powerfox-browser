@@ -429,13 +429,7 @@ pref("browser.tabs.allowTabDetach", true);
 
 // Whether to fade tab labels instead of using ellipses when cutting off
 // long page titles.
-// We need to turn this off for Mac OS X < 10.6 as our CG backend there doesn't support gradient masking
-#ifdef XP_MACOSX
-#ifndef MAC_OS_X_VERSION_10_6
-pref("browser.tabs.fadeLabels", false);
-#else
 pref("browser.tabs.fadeLabels", true);
-#endif
 
 pref("browser.ctrlTab.previews", false);
 
