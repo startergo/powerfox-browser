@@ -50,7 +50,9 @@
 @RESPATH@/chrome/@AB_CD@@JAREXT@
 @RESPATH@/chrome/@AB_CD@.manifest
 @RESPATH@/dictionaries/*
+#ifdef MOZ_BUNDLED_FONTS
 @RESPATH@/fonts/*
+#endif
 @RESPATH@/hyphenation/*
 @RESPATH@/browser/@PREF_DIR@/firefox-l10n.js
 #ifdef HAVE_MAKENSISU
@@ -614,7 +616,9 @@
 #ifdef XP_MACOSX
 @RESPATH@/res/cursors/*
 #endif
+#ifdef MOZ_BUNDLED_FONTS
 @RESPATH@/res/fonts/*
+#endif
 @RESPATH@/res/dtd/*
 @RESPATH@/res/html/*
 @RESPATH@/res/language.properties

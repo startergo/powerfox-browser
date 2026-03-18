@@ -16,12 +16,26 @@
   margin-inline-end: 6px;
 }
 
-#placesList > treechildren::-moz-tree-row(selected) {  
+#placesList > treechildren::-moz-tree-row(selected) {
   -moz-appearance: -moz-mac-source-list-selection;
 }
 
-#placesList > treechildren::-moz-tree-row(selected,focus) {  
+#placesList > treechildren::-moz-tree-row(selected,focus) {
   -moz-appearance: -moz-mac-active-source-list-selection;
+}
+
+@media (-moz-mac-tiger-theme) {
+  #placesList > treechildren::-moz-tree-row(selected) {
+    -moz-appearance: none;
+    background: linear-gradient(#A0B0CF, #7386AB) repeat-x;
+    border-top: 1px solid #94A1C0;
+  }
+
+  #placesList > treechildren::-moz-tree-row(selected,focus) {
+    -moz-appearance: none;
+    background: linear-gradient(#6494D4, #2559AC) repeat-x;
+    border-top: 1px solid #5382C5;
+  }
 }
 
 #placesList > treechildren::-moz-tree-row(History),
@@ -38,7 +52,7 @@
   margin: 0 10px;
 }
 
-#placesList > treechildren::-moz-tree-cell-text(selected) {  
+#placesList > treechildren::-moz-tree-cell-text(selected) {
   color: #fff;
   font-weight: bold;
 }
@@ -254,7 +268,7 @@
   background-color: -moz-mac-secondaryhighlight;
 }
 
-#placeContent > treechildren::-moz-tree-row(selected, focus), 
+#placeContent > treechildren::-moz-tree-row(selected, focus),
 #placeContent > treechildren::-moz-tree-row(odd, selected, focus) {
   background-color: Highlight;
   color: HighlightText !important;

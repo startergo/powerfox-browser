@@ -222,9 +222,9 @@
   z-index: 1;
 }
 
-/* Always draw a border on Yosemite to ensure the border is well-defined there
+/* Always draw a border on Yosemite or Tiger to ensure the border is well-defined there
  * (the default border is too light). */
-@media (-moz-mac-yosemite-theme) {
+@media (-moz-mac-yosemite-theme), (-moz-mac-tiger-theme) {
   #main-window[tabsintitlebar] #TabsToolbar:not([collapsed="true"]) + #nav-bar:not(:-moz-lwtheme) {
     border-top: 1px solid hsla(0,0%,0%,.2);
     background-clip: padding-box;
