@@ -1,0 +1,68 @@
+name: Build PowerFox
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-tiger-ppc:
+    runs-on: macos-26
+    strategy:
+      matrix:
+        arch: [g3, g4, g5]
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout PowerFox SDK
+        env:
+            GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+        run: |
+          git clone --depth 1 --single-branch --progress https://oauth2:${GITHUB_TOKEN}@github.com/Jazzzny/powerfox-sdk.git
+
+      - name: Install SDK
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+        run: |
+          gh release download 1.0 -p "gcc-powerpc.zip" --repo Jazzzny/powerfox-sdk
+          sudo mkdir -p /opt/gcc-powerpc
+          sudo unzip -q gcc-powerpc.zip -d /opt
+
+      - name: Install dependencies
+        run: brew install yasm pyenv
+
+      - name: Install Python 2.7
+        run: |
+          pyenv install 2.7.18
+          pyenv global 2.7.18
+
+      - name: Clone PowerFox source
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone --depth 1 --single-branch --progress https://github.com/Jazzzny/powerfox-browser.git
+          cd powerfox-browser
+          git clone --depth 1 --single-branch --progress --branch tiger "https://oauth2:${GITHUB_TOKEN}@github.com/Jazzzny/platform-uxp.git" platform
+
+      - name: Build PowerFox
+        run: |
+          cp powerfox-sdk/.mozconfig-${{ matrix.arch }}-tiger powerfox-browser/.mozconfig
+          cd powerfox-browser
+          export PATH="/opt/gcc-powerpc/bin:$(pyenv root)/shims:${PATH}"
+
+          ./mach build
+          ./mach package
+
+      - name: Copy FFmpeg libraries
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+        run: |
+          gh release download tiger-ffmpeg-6.1.4 -p "ffmpeg.zip" --repo Jazzzny/powerfox-ffmpeg-enabler
+          unzip -q ffmpeg.zip -d powerfox-browser/obj-powerpc-apple-darwin/dist/powerfox/PowerFox.app/Contents/MacOS/
+
+      - name: Upload PowerFox Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: powerfox-tiger-powerpc-${{ matrix.arch }}
+          path: powerfox-browser/obj-powerpc-apple-darwin/dist/powerfox/
