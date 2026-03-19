@@ -6,11 +6,11 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-tiger-ppc:
+  build-tiger:
     runs-on: macos-26
     strategy:
       matrix:
-        arch: [g3, g4, g5]
+        arch: [g3, g4, g5, i386]
     permissions:
       contents: read
 
@@ -25,7 +25,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
-          gh release download 1.0 -p "gcc-powerpc.zip" --repo Jazzzny/powerfox-sdk
+          gh release download 2.0 -p "gcc-powerpc.zip" --repo Jazzzny/powerfox-sdk
           sudo mkdir -p /opt/gcc-powerpc
           sudo unzip -q gcc-powerpc.zip -d /opt
 
