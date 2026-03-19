@@ -34,7 +34,7 @@ jobs:
 
       - name: Install Python 2.7
         run: |
-          PYTHON_BUILD_HOMEBREW_OPENSSL_FORMULA="openssl@3" pyenv install 2.7.18
+          pyenv install 2.7.18
           pyenv global 2.7.18
 
       - name: Clone PowerFox source
