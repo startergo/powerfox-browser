@@ -11,6 +11,15 @@ jobs:
     strategy:
       matrix:
         arch: [g3, g4, g5, i386]
+        include:
+          - arch: g3
+            target: powerpc
+          - arch: g4
+            target: powerpc
+          - arch: g5
+            target: powerpc
+          - arch: i386
+            target: i386
     permissions:
       contents: read
 
@@ -59,10 +68,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
           gh release download tiger-ffmpeg-6.1.4 -p "ffmpeg.zip" --repo Jazzzny/powerfox-ffmpeg-enabler
-          unzip -q ffmpeg.zip -d powerfox-browser/obj-powerpc-apple-darwin/dist/powerfox/PowerFox.app/Contents/MacOS/
+          unzip -q ffmpeg.zip -d powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/PowerFox.app/Contents/MacOS/
 
       - name: Upload PowerFox Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: powerfox-tiger-powerpc-${{ matrix.arch }}
-          path: powerfox-browser/obj-powerpc-apple-darwin/dist/powerfox/
+          name: powerfox-tiger-${{ matrix.target }}-${{ matrix.arch }}
+          path: powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/
