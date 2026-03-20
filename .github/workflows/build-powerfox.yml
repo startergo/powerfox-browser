@@ -10,11 +10,13 @@ jobs:
     runs-on: macos-26
     strategy:
       matrix:
-        arch: [g3, g4, g5, i386]
+        arch: [g3, g4, g4e, g5, i386]
         include:
           - arch: g3
             target: powerpc
           - arch: g4
+            target: powerpc
+          - arch: g4e
             target: powerpc
           - arch: g5
             target: powerpc
