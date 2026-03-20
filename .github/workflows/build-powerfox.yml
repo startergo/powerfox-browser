@@ -2,6 +2,23 @@ name: Build PowerFox
 
 on:
   workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build Type'
+        required: true
+        type: choice
+        default: 'nightly'
+        options:
+          - nightly
+          - release
+      version:
+        description: 'Version Number'
+        required: false
+        type: string
+      tag_name:
+        description: 'Tag Name'
+        required: false
+        type: string
   push:
     branches: [ "main" ]
 
@@ -62,7 +79,12 @@ jobs:
           cd powerfox-browser
           export PATH="/opt/gcc-powerpc/bin:$(pyenv root)/shims:${PATH}"
 
-          VERSION_STRING=$(git rev-parse --short HEAD)-$(date +%Y%m%d)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.build_type }}" = "release" ]; then
+            VERSION_STRING="${{ inputs.version }}-${{ matrix.arch }}-tiger-beta"
+          else
+            VERSION_STRING="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)"
+          fi
+
           echo "BASILISK_VERSION=$VERSION_STRING" >> $GITHUB_ENV
           export BASILISK_VERSION=$VERSION_STRING
 
@@ -73,11 +95,34 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
-          gh release download tiger-ffmpeg-6.1.4 -p "ffmpeg.zip" --repo Jazzzny/powerfox-ffmpeg-enabler
-          unzip -q ffmpeg.zip -d powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/PowerFox.app/Contents/MacOS/
+          gh release download tiger-ffmpeg-6.1.4 -p "ffmpeg-${{ matrix.arch }}.zip" --repo Jazzzny/powerfox-ffmpeg-enabler
+          unzip -q "ffmpeg-${{ matrix.arch }}.zip" -d powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/PowerFox.app/Contents/MacOS/
 
       - name: Upload PowerFox Artifact
         uses: actions/upload-artifact@v7
         with:
           name: powerfox-${{ env.BASILISK_VERSION }}-${{ matrix.arch }}-tiger-beta
           path: powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/
+
+  create-release:
+    needs: build-tiger
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Create Release
+        if: github.event_name == 'workflow_dispatch' && inputs.build_type == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          name: PowerFox ${{ inputs.version }}
+          draft: true
+          files: ./artifacts/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
