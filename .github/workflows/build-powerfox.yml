@@ -59,6 +59,7 @@ jobs:
           cp powerfox-sdk/.mozconfig-${{ matrix.arch }}-tiger powerfox-browser/.mozconfig
           cd powerfox-browser
           export PATH="/opt/gcc-powerpc/bin:$(pyenv root)/shims:${PATH}"
+          export BASILISK_VERSION=$(git rev-parse --short HEAD)-$(date +%Y%m%d)-nightly
 
           ./mach build
           ./mach package
