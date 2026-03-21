@@ -81,12 +81,15 @@ jobs:
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.build_type }}" = "release" ]; then
             VERSION_STRING="${{ inputs.version }}-tiger-beta"
+            BASILISK_VERSION_STRING="${{ inputs.version }}"
           else
-            VERSION_STRING="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)"
+            VERSION_STRING="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)-tiger-beta"
+            BASILISK_VERSION_STRING="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)"
           fi
 
           echo "BUILD_TYPE=$VERSION_STRING" >> $GITHUB_ENV
-          export BASILISK_VERSION=${{ inputs.version }}
+          echo "BASILISK_VERSION=$BASILISK_VERSION_STRING" >> $GITHUB_ENV
+          export BASILISK_VERSION="$BASILISK_VERSION_STRING"
 
           ./mach build
           ./mach package
