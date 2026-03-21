@@ -80,7 +80,7 @@ jobs:
           export PATH="/opt/gcc-powerpc/bin:$(pyenv root)/shims:${PATH}"
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.build_type }}" = "release" ]; then
-            VERSION_STRING="${{ inputs.version }}-${{ matrix.arch }}-tiger-beta"
+            VERSION_STRING="${{ inputs.version }}-tiger-beta"
           else
             VERSION_STRING="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)"
           fi
@@ -98,11 +98,15 @@ jobs:
           gh release download tiger-ffmpeg-6.1.4 -p "ffmpeg-${{ matrix.arch }}.zip" --repo Jazzzny/powerfox-ffmpeg-enabler
           unzip -q "ffmpeg-${{ matrix.arch }}.zip" -d powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/PowerFox.app/Contents/MacOS/
 
+      - name: Zip PowerFox Artifact
+        run: |
+          zip -qry "powerfox-${{ env.BUILD_TYPE }}-${{ matrix.arch }}.zip" "powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox"
+
       - name: Upload PowerFox Artifact
         uses: actions/upload-artifact@v7
         with:
           name: powerfox-${{ env.BUILD_TYPE }}-${{ matrix.arch }}
-          path: powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/
+          path: powerfox-${{ env.BUILD_TYPE }}-${{ matrix.arch }}.zip
 
   create-release:
     needs: build-tiger
@@ -124,4 +128,4 @@ jobs:
           name: PowerFox ${{ inputs.version }}
           draft: true
           token: ${{ secrets.REPO_TOKEN }}
-          files: ./artifacts/powerfox-*.zip
+          files: ./artifacts/**/*.zip
