@@ -101,7 +101,7 @@ jobs:
       - name: Upload PowerFox Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: powerfox-${{ env.BASILISK_VERSION }}-${{ matrix.arch }}-tiger-beta
+          name: powerfox-${{ env.BASILISK_VERSION }}-${{ matrix.arch }}
           path: powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/
 
   create-release:
