@@ -27,7 +27,7 @@ jobs:
     runs-on: macos-26
     strategy:
       matrix:
-        arch: [g3, g4, g4e, g5, i386]
+        arch: [g3, g4, g4e, g5, i386, debug]
         include:
           - arch: g3
             target: powerpc
@@ -39,6 +39,8 @@ jobs:
             target: powerpc
           - arch: i386
             target: i386
+          - arch: debug
+            target: powerpc
     permissions:
       contents: read
 
