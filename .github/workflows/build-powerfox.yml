@@ -85,8 +85,8 @@ jobs:
             VERSION_STRING="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)"
           fi
 
-          echo "BASILISK_VERSION=$VERSION_STRING" >> $GITHUB_ENV
-          export BASILISK_VERSION=$VERSION_STRING
+          echo "BUILD_TYPE=$VERSION_STRING" >> $GITHUB_ENV
+          export BASILISK_VERSION=${{ inputs.version }}
 
           ./mach build
           ./mach package
@@ -101,7 +101,7 @@ jobs:
       - name: Upload PowerFox Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: powerfox-${{ env.BASILISK_VERSION }}-${{ matrix.arch }}
+          name: powerfox-${{ env.BUILD_TYPE }}-${{ matrix.arch }}
           path: powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/
 
   create-release:
@@ -112,7 +112,7 @@ jobs:
       contents: write
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ./artifacts
 
@@ -123,6 +123,5 @@ jobs:
           tag_name: ${{ inputs.tag_name }}
           name: PowerFox ${{ inputs.version }}
           draft: true
-          files: ./artifacts/**/*.zip
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+          token: ${{ secrets.REPO_TOKEN }}
+          files: ./artifacts/powerfox-*.zip
