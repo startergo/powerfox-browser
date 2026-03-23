@@ -88,14 +88,13 @@ jobs:
           fi
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.build_type }}" = "release" ]; then
-            VERSION_STRING="${{ inputs.version }}-tiger-beta"
             BASILISK_VERSION_STRING="${{ inputs.version }}"
           else
-            VERSION_STRING="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)-tiger-beta"
             BASILISK_VERSION_STRING="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)"
           fi
+          BUILD_TYPE_STRING="tiger-beta"
 
-          echo "BUILD_TYPE=$VERSION_STRING" >> $GITHUB_ENV
+          echo "BUILD_TYPE=$BUILD_TYPE_STRING" >> $GITHUB_ENV
           echo "BASILISK_VERSION=$BASILISK_VERSION_STRING" >> $GITHUB_ENV
           export BASILISK_VERSION="$BASILISK_VERSION_STRING"
 
@@ -123,14 +122,14 @@ jobs:
           fi
           APP_PATH="powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/${APP_NAME}"
           cp -R "$APP_PATH" .
-          zip -qry "powerfox-${{ env.BUILD_TYPE }}-${{ matrix.arch }}.zip" "$APP_NAME"
+          zip -qry "powerfox-${{ env.BASILISK_VERSION }}-${{ matrix.arch }}-${{ env.BUILD_TYPE }}.zip" "$APP_NAME"
           rm -rf "$APP_NAME"
 
       - name: Upload PowerFox Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: powerfox-${{ env.BUILD_TYPE }}-${{ matrix.arch }}
-          path: powerfox-${{ env.BUILD_TYPE }}-${{ matrix.arch }}.zip
+          name: powerfox-${{ env.BASILISK_VERSION }}-${{ matrix.arch }}-${{ env.BUILD_TYPE }}
+          path: powerfox-${{ env.BASILISK_VERSION }}-${{ matrix.arch }}-${{ env.BUILD_TYPE }}.zip
 
   create-release:
     needs: build-tiger
