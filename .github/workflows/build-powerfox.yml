@@ -121,7 +121,10 @@ jobs:
           else
             APP_NAME="PowerFox.app"
           fi
-          zip -qry "powerfox-${{ env.BUILD_TYPE }}-${{ matrix.arch }}.zip" "powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/${APP_NAME}"
+          APP_PATH="powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/${APP_NAME}"
+          cp -R "$APP_PATH" .
+          zip -qry "powerfox-${{ env.BUILD_TYPE }}-${{ matrix.arch }}.zip" "$APP_NAME"
+          rm -rf "$APP_NAME"
 
       - name: Upload PowerFox Artifact
         uses: actions/upload-artifact@v7
