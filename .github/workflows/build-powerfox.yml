@@ -131,7 +131,7 @@ jobs:
 
   create-release:
     needs: build-tiger
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.build_type == 'release'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -142,11 +142,10 @@ jobs:
           path: ./artifacts
 
       - name: Create Release
-        if: github.event_name == 'workflow_dispatch' && inputs.build_type == 'release'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.tag_name }}
-          name: PowerFox ${{ inputs.version }}
+          name: ${{ inputs.version }}
           draft: true
           token: ${{ secrets.REPO_TOKEN }}
           files: ./artifacts/**/*.zip
