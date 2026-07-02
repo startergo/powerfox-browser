@@ -36,6 +36,7 @@
   "chrome://browser/locale/preferences/applications.dtd">
 <!ENTITY % advancedDTD SYSTEM
   "chrome://browser/locale/preferences/advanced.dtd">
+<!ENTITY % powerFoxDTD SYSTEM "chrome://browser/locale/PowerFox.dtd">
 %brandDTD;
 %globalPreferencesDTD;
 %preferencesDTD;
@@ -53,6 +54,7 @@
 %contentDTD;
 %applicationsDTD;
 %advancedDTD;
+%powerFoxDTD;
 ]>
 
 <page xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -165,6 +167,16 @@
         <image class="category-icon"/>
         <label class="category-name" flex="1">&paneAdvanced.title;</label>
       </richlistitem>
+
+      <richlistitem id="category-powerfox"
+                    class="category"
+                    value="panePowerfox"
+                    helpTopic="prefs-powerfox"
+                    tooltiptext="PowerFox"
+                    align="center">
+        <image class="category-icon"/>
+        <label class="category-name" flex="1">PowerFox</label>
+      </richlistitem>
     </richlistbox>
 
     <keyset>
@@ -186,6 +198,7 @@
 #ifdef MOZ_SERVICES_SYNC
 #include sync.xul
 #endif
+#include powerfox.xul
       </prefpane>
     </vbox>
 

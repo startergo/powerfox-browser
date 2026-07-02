@@ -12,6 +12,7 @@
 /* import-globals-from applications.js */
 /* import-globals-from security.js */
 /* import-globals-from sync.js */
+/* import-globals-from powerfox.js */
 /* import-globals-from ../../../base/content/utilityOverlay.js */
 
 "use strict";
@@ -67,6 +68,7 @@ function init_all() {
   register_module("paneSync", gSyncPane);
 #endif
   register_module("paneSecurity", gSecurityPane);
+  register_module("panePowerfox", gPowerFoxPane);
 
   let categories = document.getElementById("categories");
   categories.addEventListener("select", event => gotoPref(event.target.value));

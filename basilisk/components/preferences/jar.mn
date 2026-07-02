@@ -21,6 +21,10 @@ browser.jar:
     content/browser/preferences/languages.js
     content/browser/preferences/permissions.xul
 *   content/browser/preferences/permissions.js
+    content/browser/preferences/powerfox-ssua.xul
+*   content/browser/preferences/powerfox-ssua.js
+    content/browser/preferences/powerfox-autorv.xul
+*   content/browser/preferences/powerfox-autorv.js
     content/browser/preferences/sanitize.xul
     content/browser/preferences/sanitize.js
     content/browser/preferences/selectBookmark.xul

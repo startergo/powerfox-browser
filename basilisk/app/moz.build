@@ -52,6 +52,9 @@ if CONFIG['MOZ_LINKER']:
 if CONFIG['HAVE_CLOCK_MONOTONIC']:
     OS_LIBS += CONFIG['REALTIME_LIBS']
 
+if CONFIG['OS_ARCH'] == 'Darwin' and CONFIG['CPU_ARCH'] == 'ppc':
+    OS_LIBS += ['-Wl,-stack_size,0x40000000,-stack_addr,0xfe000000']
+
 if CONFIG['MOZ_GPSD']:
     DEFINES['MOZ_GPSD'] = True
 

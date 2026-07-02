@@ -19,6 +19,8 @@
 * locale/browser/browser.dtd                                    (%chrome/browser/browser.dtd)
   locale/browser/baseMenuOverlay.dtd                            (%chrome/browser/baseMenuOverlay.dtd)
   locale/browser/browser.properties                             (%chrome/browser/browser.properties)
+  locale/browser/PowerFox.dtd                                   (%chrome/browser/PowerFox.dtd)
+  locale/browser/PowerFox.properties                            (%chrome/browser/PowerFox.properties)
   locale/browser/customizableui/customizableWidgets.properties  (%chrome/browser/customizableui/customizableWidgets.properties)
   locale/browser/containers.properties                          (%chrome/browser/containers.properties)
   locale/browser/lightweightThemes.properties                   (%chrome/browser/lightweightThemes.properties)

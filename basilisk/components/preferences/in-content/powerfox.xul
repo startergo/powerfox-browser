@@ -1,0 +1,106 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+<!-- Custom PowerFox prefpanel (C)2016 Cameron Kaiser -->
+
+<script type="application/javascript"
+        src="chrome://browser/content/preferences/in-content/powerfox.js"/>
+
+<preferences id="powerFoxPreferences" hidden="true" data-category="panePowerfox">
+
+  <preference id="media.mediasource.enabled"
+              name="media.mediasource.enabled"
+              type="bool"/>
+  <preference id="pdfjs.disabled"
+              name="pdfjs.disabled"
+              type="bool"/>
+  <preference id="tenfourfox.ua.template"
+              name="tenfourfox.ua.template"
+              type="string"/>
+  <preference id="javascript.options.ion"
+              name="javascript.options.ion"
+              type="bool"/>
+  <preference id="javascript.options.baselinejit"
+              name="javascript.options.baselinejit"
+              type="bool"/>
+</preferences>
+
+<stringbundle id="powerFoxBundle"
+              src="chrome://browser/locale/PowerFox.properties"/>
+
+<hbox id="header-powerfox"
+      class="header"
+      hidden="true"
+      data-category="panePowerfox">
+  <label class="header-name" flex="1">PowerFox</label>
+  <button class="help-button"
+          aria-label="&helpButton.label;"/>
+</hbox>
+
+<groupbox id="mseModeGroup" data-category="panePowerfox" hidden="true">
+  <caption><label>&TFFmseMode.title;</label></caption>
+  <vbox>
+      <checkbox id="mseModeCheckbox"
+                label="&TFFmseMode.prompt;"
+                preference="media.mediasource.enabled"/>
+  </vbox>
+</groupbox>
+
+<groupbox id="pdfJsGroup" data-category="panePowerfox" hidden="true">
+  <caption><label>&TFFpdfViewMode.title;</label></caption>
+  <vbox>
+      <checkbox id="pdfJsCheckbox"
+                label="&TFFpdfViewMode.prompt;"
+                onsyncfrompreference="return gPowerFoxPane.readPDFjs();"
+                onsynctopreference="return gPowerFoxPane.writePDFjs();"
+                preference="pdfjs.disabled"/>
+  </vbox>
+</groupbox>
+
+<groupbox id="jsOptionsGroup" data-category="panePowerfox" hidden="true">
+  <caption><label>&TFFjsOptions.title;</label></caption>
+  <vbox>
+      <description>&TFFjsOptions.warning;</description>
+      <checkbox id="ionJitCheckbox"
+                label="&TFFjsOptions.ion;"
+                preference="javascript.options.ion"/>
+      <checkbox id="baselineJitCheckbox"
+                label="&TFFjsOptions.baseline;"
+                preference="javascript.options.baselinejit"/>
+  </vbox>
+</groupbox>
+
+<groupbox id="uaGroup" data-category="panePowerfox" hidden="true">
+  <caption><label>&TFFuserAgent.title;</label></caption>
+  <hbox align="center" flex="1">
+      <label>&TFFuserAgent.prompt2;</label>
+      <menulist id="uaBox"
+                onsyncfrompreference="return gPowerFoxPane.readUA();"
+                onsynctopreference="return gPowerFoxPane.writeUA();"
+                preference="tenfourfox.ua.template">
+          <menupopup>
+              <menuitem label="&TFFuserAgent.default;" value=""/>
+              <menuitem label="Firefox 128ESR (Intel)" value="fx128"/>
+              <menuitem label="Firefox 115ESR (Intel)" value="fx115"/>
+              <menuitem label="Firefox 102ESR (Intel)" value="fx102"/>
+              <menuitem label="Firefox 91ESR (Intel)" value="fx91"/>
+              <menuitem label="Firefox 78ESR (Intel)" value="fx78"/>
+              <menuitem label="Firefox 68ESR (Intel)" value="fx68"/>
+              <menuitem label="Firefox 60ESR (Intel)" value="fx60"/>
+              <menuitem label="Firefox 52ESR (Intel)" value="fx"/>
+              <menuitem label="iPad Safari" value="ipad"/>
+              <menuitem label="iPhone Safari" value="iphone"/>
+          </menupopup>
+      </menulist>
+      <spacer flex="1"/>
+      <button id="siteSpecificUAs" label="&TFFsiteSpecificUAs.label;"/>
+  </hbox>
+</groupbox>
+
+<groupbox id="autoRVGroup" data-category="panePowerfox" hidden="true">
+  <caption><label>&TFFautoReaderView.title;</label></caption>
+  <hbox>
+      <button id="autoReaderView" label="&TFFautoReaderView.label;"/>
+  </hbox>
+</groupbox>
