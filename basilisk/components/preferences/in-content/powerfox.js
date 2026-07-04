@@ -7,6 +7,8 @@
 Components.utils.import("resource://gre/modules/AppConstants.jsm");
 Components.utils.import("resource://gre/modules/Services.jsm");
 
+const GLOBAL_UA_PREF = "network.http.useragent.global_override";
+
 var gPowerFoxPane = {
 
   init: function ()
@@ -85,7 +87,7 @@ var gPowerFoxPane = {
     // Synchronize the pref on entry in case it's stale.
     pref = pref.value;
     if (this.validUA[pref]) {
-        Services.prefs.setCharPref("general.useragent.override", this.validUA[pref]);
+        Services.prefs.setCharPref(GLOBAL_UA_PREF, this.validUA[pref]);
         return pref;
     }
     return "";
@@ -94,11 +96,11 @@ var gPowerFoxPane = {
   {
     var nupref = document.getElementById("uaBox").value;
     if (this.validUA[nupref]) {
-        Services.prefs.setCharPref("general.useragent.override", this.validUA[nupref]);
+        Services.prefs.setCharPref(GLOBAL_UA_PREF, this.validUA[nupref]);
         return nupref;
     }
-    if (Services.prefs.prefHasUserValue("general.useragent.override")) {
-      Services.prefs.clearUserPref("general.useragent.override");
+    if (Services.prefs.prefHasUserValue(GLOBAL_UA_PREF)) {
+      Services.prefs.clearUserPref(GLOBAL_UA_PREF);
     }
     return "";
   }, 
