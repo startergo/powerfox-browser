@@ -8,6 +8,7 @@
 // Set defines to construct URLs
 #define BRANDING_BASEURL powerfox.jazzzny.me
 #define BRANDING_SITEURL @BRANDING_BASEURL@
+#define POWERFOX_UPDATER_BASEURL https://powerfox-updater.jazzzny.me
 
 // Shared Branding Preferences
 // XXX: These should REALLY go back to application preferences
@@ -19,22 +20,24 @@ pref("startup.homepage_welcome_url", "powerfox.jazzzny.me/welcome.html");
 pref("startup.homepage_welcome_url.additional", "");
 
 // Version release notes
-pref("app.releaseNotesURL", "about:blank");
+pref("app.releaseNotesURL", "@POWERFOX_UPDATER_BASEURL@/releases/latest");
 
 // Vendor home page
 pref("app.vendorURL", "powerfox.jazzzny.me");
 
-pref("app.update.url", "");
+pref("app.update.url", "@POWERFOX_UPDATER_BASEURL@/update/6/%PRODUCT%/%VERSION%/%BUILD_ID%/%BUILD_TARGET%/%LOCALE%/%CHANNEL%/%OS_VERSION%/%DISTRIBUTION%/%DISTRIBUTION_VERSION%/update.xml");
 
 // URL user can browse to manually if for some reason all update installation
 // attempts fail.
-pref("app.update.url.manual", "about:");
+pref("app.update.url.manual", "@POWERFOX_UPDATER_BASEURL@/");
 // A default value for the "More information about this update" link
 // supplied in the "An update is available" page of the update wizard.
-pref("app.update.url.details", "about:");
+pref("app.update.url.details", "@POWERFOX_UPDATER_BASEURL@/releases/%VERSION%");
 
-// Switch Application Updates off for unofficial branding
-pref("app.update.enabled", false);
+// PowerFox updates are presented as manual downloads from GitHub releases.
+pref("app.update.enabled", true);
+pref("app.update.auto", false);
+pref("app.update.staging.enabled", false);
 
 // Shared User Agent Overrides
 #include ../../shared/uaoverrides.inc

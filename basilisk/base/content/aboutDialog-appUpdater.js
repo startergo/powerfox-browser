@@ -267,6 +267,11 @@ appUpdater.prototype =
         return;
       }
 
+      if (gAppUpdater.update.manualUpdate) {
+        gAppUpdater.selectPanel("manualUpdate");
+        return;
+      }
+
       if (!gAppUpdater.aus.canApplyUpdates) {
         gAppUpdater.selectPanel("manualUpdate");
         return;
