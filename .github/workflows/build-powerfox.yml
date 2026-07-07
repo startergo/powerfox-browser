@@ -23,24 +23,91 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build-tiger:
+  build-powerfox:
     runs-on: macos-26
+    name: Build PowerFox ${{ matrix.artifact_suffix }}
     strategy:
+      fail-fast: false
       matrix:
-        arch: [g3, g4, g4e, g5, i386, debug]
         include:
-          - arch: g3
+          - os: "10.4"
+            config: g3
             target: powerpc
-          - arch: g4
+            artifact_suffix: 10.4-g3
+            app_name: PowerFox.app
+            ffmpeg_asset: 10.4-G3.zip
+          - os: "10.4"
+            config: g4
             target: powerpc
-          - arch: g4e
+            artifact_suffix: 10.4-g4-7400
+            app_name: PowerFox.app
+            ffmpeg_asset: 10.4-G4-7400.zip
+          - os: "10.4"
+            config: g4e
             target: powerpc
-          - arch: g5
+            artifact_suffix: 10.4-g4-7450
+            app_name: PowerFox.app
+            ffmpeg_asset: 10.4-G4-7450.zip
+          - os: "10.4"
+            config: g5
             target: powerpc
-          - arch: i386
+            artifact_suffix: 10.4-g5
+            app_name: PowerFox.app
+            ffmpeg_asset: 10.4-G5.zip
+          - os: "10.4"
+            config: i386
             target: i386
-          - arch: debug
+            artifact_suffix: 10.4-i386
+            app_name: PowerFox.app
+            ffmpeg_asset: 10.4-i386.zip
+          - os: "10.4"
+            config: debug
             target: powerpc
+            artifact_suffix: 10.4-debug
+            app_name: PowerFoxDebug.app
+            ffmpeg_asset: 10.4-G3.zip
+          - os: "10.5"
+            config: g4
+            target: powerpc
+            artifact_suffix: 10.5-g4
+            app_name: PowerFox.app
+            ffmpeg_asset: 10.5-G4.zip
+          - os: "10.5"
+            config: g5
+            target: powerpc
+            artifact_suffix: 10.5-g5
+            app_name: PowerFox.app
+            ffmpeg_asset: 10.5-G5.zip
+          - os: "10.5"
+            config: i386
+            target: i386
+            artifact_suffix: 10.5-i386
+            app_name: PowerFox.app
+            ffmpeg_asset: 10.5-i386.zip
+          - os: "10.5"
+            config: debug
+            target: powerpc
+            artifact_suffix: 10.5-debug
+            app_name: PowerFoxDebug.app
+            ffmpeg_asset: 10.5-G4.zip
+          - os: "10.6"
+            config: i386
+            target: i386
+            artifact_suffix: 10.6-i386
+            app_name: PowerFox.app
+            ffmpeg_asset: 10.6-i386.zip
+          - os: "10.6"
+            config: x86_64
+            target: x86_64
+            artifact_suffix: 10.6-x86_64
+            app_name: PowerFox.app
+            ffmpeg_asset: 10.6-x86_64.zip
+          - os: "10.6"
+            config: debug
+            target: i386
+            artifact_suffix: 10.6-debug
+            app_name: PowerFoxDebug.app
+            ffmpeg_asset: 10.6-i386.zip
     permissions:
       contents: read
 
@@ -55,17 +122,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
-          gh release download 2.0 -p "gcc-powerpc.zip" --repo Jazzzny/powerfox-sdk
-          sudo mkdir -p /opt/gcc-powerpc
-          sudo unzip -q gcc-powerpc.zip -d /opt
+          gh release download 3.0 -p "powerfox-sdk-3.0.zip" --repo Jazzzny/powerfox-sdk
+          sudo mkdir -p /opt/
+          sudo unzip -q powerfox-sdk-3.0.zip -d /opt
 
       - name: Install dependencies
-        run: brew install yasm pyenv
+        run: brew install yasm
 
-      - name: Install Python 2.7
-        run: |
-          pyenv install 2.7.18
-          pyenv global 2.7.18
+      - name: Install Python 3.13
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.13
 
       - name: Clone PowerFox source
         env:
@@ -73,18 +140,16 @@ jobs:
         run: |
           git clone --depth 1 --single-branch --progress https://github.com/Jazzzny/powerfox-browser.git
           cd powerfox-browser
-          git clone --depth 1 --single-branch --progress --branch tiger "https://oauth2:${GITHUB_TOKEN}@github.com/Jazzzny/platform-uxp.git" platform
+          git clone --depth 1 --single-branch --progress "https://oauth2:${GITHUB_TOKEN}@github.com/Jazzzny/platform-uxp.git" platform
 
       - name: Build PowerFox
         run: |
-          cp powerfox-sdk/.mozconfig-${{ matrix.arch }}-tiger powerfox-browser/.mozconfig
+          cp "powerfox-sdk/${{ matrix.os }}/.mozconfig-${{ matrix.config }}" powerfox-browser/.mozconfig
           cd powerfox-browser
-          export PATH="/opt/gcc-powerpc/bin:$(pyenv root)/shims:${PATH}"
-
-          if [ "${{ matrix.arch }}" = "debug" ]; then
-            APP_NAME="PowerFoxDebug.app"
+          if [ "${{ matrix.os }}" = "10.6" ]; then
+            export PATH="/opt/clang-snowleopard/bin:${PATH}"
           else
-            APP_NAME="PowerFox.app"
+            export PATH="/opt/gcc-powerpc/bin:${PATH}"
           fi
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.build_type }}" = "release" ]; then
@@ -92,9 +157,8 @@ jobs:
           else
             BASILISK_VERSION_STRING="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)"
           fi
-          BUILD_TYPE_STRING="tiger-beta"
 
-          echo "BUILD_TYPE=$BUILD_TYPE_STRING" >> $GITHUB_ENV
+          echo "POWERFOX_SUFFIX=${{ matrix.artifact_suffix }}" >> $GITHUB_ENV
           echo "BASILISK_VERSION=$BASILISK_VERSION_STRING" >> $GITHUB_ENV
           export BASILISK_VERSION="$BASILISK_VERSION_STRING"
 
@@ -105,34 +169,31 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
         run: |
-          if [ "${{ matrix.arch }}" = "debug" ]; then
-            APP_NAME="PowerFoxDebug.app"
-          else
-            APP_NAME="PowerFox.app"
-          fi
-          gh release download tiger-ffmpeg-6.1.4 -p "ffmpeg-${{ matrix.arch }}.zip" --repo Jazzzny/powerfox-ffmpeg-enabler
-          unzip -q "ffmpeg-${{ matrix.arch }}.zip" -d powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/${APP_NAME}/Contents/MacOS/
+          APP_PATH="powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/${{ matrix.app_name }}"
+          gh release download ffmpeg-6.1.6 -p "${{ matrix.ffmpeg_asset }}" --repo Jazzzny/powerfox-ffmpeg-enabler
+          unzip -q -o "${{ matrix.ffmpeg_asset }}" -d "$APP_PATH/Contents/MacOS/"
+
+      - name: Fix Snow Leopard libc++ paths
+        if: matrix.os == '10.6'
+        run: |
+          bash powerfox-sdk/fix-snowleopard-libcxx.sh "powerfox-browser/obj-${{ matrix.target }}-apple-darwin"
 
       - name: Zip PowerFox Artifact
         run: |
-          if [ "${{ matrix.arch }}" = "debug" ]; then
-            APP_NAME="PowerFoxDebug.app"
-          else
-            APP_NAME="PowerFox.app"
-          fi
-          APP_PATH="powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/${APP_NAME}"
+          APP_NAME="${{ matrix.app_name }}"
+          APP_PATH="powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/$APP_NAME"
           cp -R "$APP_PATH" .
-          zip -qry "powerfox-${{ env.BASILISK_VERSION }}-${{ matrix.arch }}-${{ env.BUILD_TYPE }}.zip" "$APP_NAME"
+          zip -qry "powerfox-${{ env.BASILISK_VERSION }}-${{ env.POWERFOX_SUFFIX }}.zip" "$APP_NAME"
           rm -rf "$APP_NAME"
 
       - name: Upload PowerFox Artifact
         uses: actions/upload-artifact@v7
         with:
-          name: powerfox-${{ env.BASILISK_VERSION }}-${{ matrix.arch }}-${{ env.BUILD_TYPE }}
-          path: powerfox-${{ env.BASILISK_VERSION }}-${{ matrix.arch }}-${{ env.BUILD_TYPE }}.zip
+          name: powerfox-${{ env.BASILISK_VERSION }}-${{ env.POWERFOX_SUFFIX }}
+          path: powerfox-${{ env.BASILISK_VERSION }}-${{ env.POWERFOX_SUFFIX }}.zip
 
   create-release:
-    needs: build-tiger
+    needs: build-powerfox
     if: github.event_name == 'workflow_dispatch' && inputs.build_type == 'release'
     runs-on: ubuntu-latest
     permissions:
