@@ -169,7 +169,15 @@ jobs:
         run: |
           APP_PATH="powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/${{ matrix.app_name }}"
           gh release download ffmpeg-6.1.6 -p "${{ matrix.ffmpeg_asset }}" --repo Jazzzny/powerfox-ffmpeg-enabler
-          unzip -q -o "${{ matrix.ffmpeg_asset }}" -d "$APP_PATH/Contents/MacOS/"
+          FFMPEG_TMP="${RUNNER_TEMP}/powerfox-ffmpeg-${{ matrix.artifact_suffix }}"
+          rm -rf "$FFMPEG_TMP"
+          mkdir -p "$FFMPEG_TMP"
+          unzip -q -o "${{ matrix.ffmpeg_asset }}" -d "$FFMPEG_TMP"
+
+          FFMPEG_DIR="$FFMPEG_TMP/${{ matrix.ffmpeg_asset }}"
+          FFMPEG_DIR="${FFMPEG_DIR%.zip}"
+          cp -p "$FFMPEG_DIR/libavcodec.60.dylib" "$APP_PATH/Contents/MacOS/"
+          cp -p "$FFMPEG_DIR/libavutil.58.dylib" "$APP_PATH/Contents/MacOS/"
 
       - name: Fix Snow Leopard libc++ paths
         if: matrix.os == '10.6'
