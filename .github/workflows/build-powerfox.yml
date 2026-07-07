@@ -146,9 +146,7 @@ jobs:
         run: |
           cp "powerfox-sdk/${{ matrix.os }}/.mozconfig-${{ matrix.config }}" powerfox-browser/.mozconfig
           cd powerfox-browser
-          if [ "${{ matrix.os }}" = "10.6" ]; then
-            export PATH="/opt/clang-snowleopard/bin:${PATH}"
-          else
+          if [ "${{ matrix.os }}" != "10.6" ]; then
             export PATH="/opt/gcc-powerpc/bin:${PATH}"
           fi
 
