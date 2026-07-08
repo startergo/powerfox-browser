@@ -127,7 +127,7 @@ jobs:
           sudo unzip -q powerfox-sdk-3.0.zip -d /opt
 
       - name: Install dependencies
-        run: brew install yasm
+        run: brew install yasm nasm
 
       - name: Install Python 3.13
         uses: actions/setup-python@v6
