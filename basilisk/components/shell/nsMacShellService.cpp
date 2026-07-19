@@ -41,6 +41,7 @@ nsMacShellService::IsDefaultBrowser(bool aStartupCheck,
 {
   *aIsDefaultBrowser = false;
 
+#if defined(MAC_OS_X_VERSION_10_4) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
   CFStringRef firefoxID = ::CFBundleGetIdentifier(::CFBundleGetMainBundle());
   if (!firefoxID) {
     // CFBundleGetIdentifier is expected to return nullptr only if the specified
@@ -56,6 +57,10 @@ nsMacShellService::IsDefaultBrowser(bool aStartupCheck,
     *aIsDefaultBrowser = ::CFStringCompare(firefoxID, defaultBrowserID, 0) == kCFCompareEqualTo;
     ::CFRelease(defaultBrowserID);
   }
+#else
+  (void)aStartupCheck;
+  (void)aForAllTypes;
+#endif
 
   return NS_OK;
 }
@@ -65,6 +70,11 @@ nsMacShellService::SetDefaultBrowser(bool aClaimAllTypes, bool aForAllUsers)
 {
   // Note: We don't support aForAllUsers on Mac OS X.
 
+#if !defined(MAC_OS_X_VERSION_10_4) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_4
+  (void)aClaimAllTypes;
+  (void)aForAllUsers;
+  return NS_ERROR_NOT_IMPLEMENTED;
+#else
   CFStringRef firefoxID = ::CFBundleGetIdentifier(::CFBundleGetMainBundle());
   if (!firefoxID) {
     return NS_ERROR_FAILURE;
@@ -95,6 +105,7 @@ nsMacShellService::SetDefaultBrowser(bool aClaimAllTypes, bool aForAllUsers)
   }
 
   return NS_OK;
+#endif
 }
 
 NS_IMETHODIMP
@@ -400,12 +411,17 @@ nsMacShellService::GetDefaultFeedReader(nsIFile** _retval)
   nsresult rv = NS_ERROR_FAILURE;
   *_retval = nullptr;
 
-  CFStringRef defaultHandlerID = ::LSCopyDefaultHandlerForURLScheme(CFSTR("feed"));
+  CFStringRef defaultHandlerID = nullptr;
+#if defined(MAC_OS_X_VERSION_10_4) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
+  defaultHandlerID = ::LSCopyDefaultHandlerForURLScheme(CFSTR("feed"));
   if (!defaultHandlerID) {
+#endif
     defaultHandlerID = ::CFStringCreateWithCString(kCFAllocatorDefault,
                                                    SAFARI_BUNDLE_IDENTIFIER,
                                                    kCFStringEncodingASCII);
+#if defined(MAC_OS_X_VERSION_10_4) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_4
   }
+#endif
 
   CFURLRef defaultHandlerURL = nullptr;
   OSStatus status = ::LSFindApplicationForInfo(kLSUnknownCreator,
