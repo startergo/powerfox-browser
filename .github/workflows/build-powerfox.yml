@@ -53,6 +53,34 @@ jobs:
             echo "##[error]MacOSX10.6.sdk not found after sparse-checkout"
             exit 1
           fi
+
+          # The 10.6 SDK only ships libstdc++ (GCC 4.0.1) headers, not
+          # libc++. Modern Xcode toolchains put libc++ headers either in
+          # the toolchain or the macOS SDK bundle. Find them and symlink
+          # into the 10.6 SDK so `-stdlib=libc++ -isysroot <10.6sdk>` can
+          # locate <new>, <vector>, etc.
+          LIBCXX_HDRS=""
+          for candidate in \
+            "$(xcrun --show-toolchain-path 2>/dev/null)/usr/include/c++/v1" \
+            "$(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1" \
+            /Applications/Xcode*.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1 \
+            "$(xcrun --sdk macosx --show-sdk-path)/usr/include/c++/v1"; do
+            if [ -n "$candidate" ] && [ -f "$candidate/new" ]; then
+              LIBCXX_HDRS="$candidate"
+              break
+            fi
+          done
+          if [ -z "$LIBCXX_HDRS" ]; then
+            echo "##[error]Could not locate libc++ headers on runner"
+            find /Applications -maxdepth 8 -type d -name 'v1' -path '*c++*' 2>/dev/null | head -5
+            exit 1
+          fi
+          echo "libc++ headers at $LIBCXX_HDRS"
+          mkdir -p "$SDK_PATH/usr/include/c++"
+          if [ ! -e "$SDK_PATH/usr/include/c++/v1" ]; then
+            ln -s "$LIBCXX_HDRS" "$SDK_PATH/usr/include/c++/v1"
+          fi
+
           echo "Using 10.6 SDK at $SDK_PATH"
           echo "sdk_path=$SDK_PATH" >> "$GITHUB_OUTPUT"
 
