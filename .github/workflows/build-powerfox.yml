@@ -68,6 +68,13 @@ jobs:
           CC="clang -arch \$TARGET_CPU"
           CXX="clang++ -arch \$TARGET_CPU"
 
+          # macOS 10.6 has no native TLS; clang rejects `thread_local`
+          # outright when the deployment target is darwin10. Emulated TLS
+          # generates calls to __emutls_get_address instead, which works on
+          # any target.
+          CXXFLAGS="-femulated-tls"
+          CFLAGS="-femulated-tls"
+
           export HOST_CC="clang -arch \$TARGET_CPU"
           export HOST_CXX="clang++ -arch \$TARGET_CPU"
 
@@ -77,7 +84,7 @@ jobs:
           LD=ld
           STRIP=strip
           OTOOL=otool
-          export CC CXX HOST_CC HOST_CXX RANLIB AR AS LD STRIP OTOOL
+          export CC CXX HOST_CC HOST_CXX RANLIB AR AS LD STRIP OTOOL CFLAGS CXXFLAGS
 
           ac_add_options --target=x86_64-apple-darwin10.8.0
           ac_add_options --host=x86_64-apple-darwin
