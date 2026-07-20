@@ -33,33 +33,28 @@ jobs:
         with:
           python-version: 3.13
 
-      - name: Locate oldest available macOS SDK
+      - name: Fetch MacOSX10.6.sdk
         id: sdk
         run: |
           set -e
-          XC_SDKS="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs"
-          CLT_SDKS="/Library/Developer/CommandLineTools/SDKs"
-          mkdir -p /tmp/sdks
-          SDK_PATH=""
-          # Prefer 10.6 if available
-          for base in "$XC_SDKS" "$CLT_SDKS"; do
-            if [ -d "$base/MacOSX10.6.sdk" ]; then
-              SDK_PATH="$base/MacOSX10.6.sdk"
-              break
-            fi
-          done
-          if [ -n "$SDK_PATH" ]; then
-            echo "Using 10.6 SDK at $SDK_PATH"
-            echo "with_sdk=--with-macos-sdk=$SDK_PATH" >> "$GITHUB_OUTPUT"
-            echo "macos_target=10.6" >> "$GITHUB_OUTPUT"
-          else
-            # Fall back to whatever Xcode ships; set deployment target to 10.6
-            # so weak-linking handles the missing APIs at runtime.
-            DEFAULT_SDK="$(xcrun --show-osx-sdk-path 2>/dev/null || true)"
-            echo "10.6 SDK not found; falling back to $DEFAULT_SDK with --enable-macos-target=10.6"
-            echo "with_sdk=" >> "$GITHUB_OUTPUT"
-            echo "macos_target=10.6" >> "$GITHUB_OUTPUT"
+          # The macos-26 runner ships Xcode 26's SDK, which has removed
+          # legacy Carbon/Quickdraw/HIView headers entirely. Building
+          # PowerFox for a 10.6 deployment target against that SDK fails
+          # on every file that uses Cursor/HIView/WindowDef/etc. Fetch
+          # the real 10.6 SDK from phracker/MacOSX-SDKs instead.
+          SDK_ROOT="$HOME/MacOSX-SDKs"
+          rm -rf "$SDK_ROOT"
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/phracker/MacOSX-SDKs.git "$SDK_ROOT"
+          cd "$SDK_ROOT"
+          git sparse-checkout set MacOSX10.6.sdk
+          SDK_PATH="$SDK_ROOT/MacOSX10.6.sdk"
+          if [ ! -d "$SDK_PATH" ]; then
+            echo "##[error]MacOSX10.6.sdk not found after sparse-checkout"
+            exit 1
           fi
+          echo "Using 10.6 SDK at $SDK_PATH"
+          echo "sdk_path=$SDK_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Write .mozconfig
         run: |
@@ -67,13 +62,6 @@ jobs:
           TARGET_CPU=x86_64
           CC="clang -arch \$TARGET_CPU"
           CXX="clang++ -arch \$TARGET_CPU"
-
-          # macOS 10.6 has no native TLS; clang rejects `thread_local`
-          # outright when the deployment target is darwin10. Emulated TLS
-          # generates calls to __emutls_get_address instead, which works on
-          # any target.
-          CXXFLAGS="-femulated-tls"
-          CFLAGS="-femulated-tls"
 
           export HOST_CC="clang -arch \$TARGET_CPU"
           export HOST_CXX="clang++ -arch \$TARGET_CPU"
@@ -84,12 +72,12 @@ jobs:
           LD=ld
           STRIP=strip
           OTOOL=otool
-          export CC CXX HOST_CC HOST_CXX RANLIB AR AS LD STRIP OTOOL CFLAGS CXXFLAGS
+          export CC CXX HOST_CC HOST_CXX RANLIB AR AS LD STRIP OTOOL
 
           ac_add_options --target=x86_64-apple-darwin10.8.0
           ac_add_options --host=x86_64-apple-darwin
-          ac_add_options --enable-macos-target=${{ steps.sdk.outputs.macos_target }}
-          ${{ steps.sdk.outputs.with_sdk }}
+          ac_add_options --enable-macos-target=10.6
+          ac_add_options --with-macos-sdk=${{ steps.sdk.outputs.sdk_path }}
           ac_add_options --enable-application=basilisk
           ac_add_options --disable-tests
           ac_add_options --enable-optimize=-O2
