@@ -96,21 +96,6 @@ jobs:
           echo "Runtime objects installed:"
           ls -la "${{ steps.sdk.outputs.sdk_path }}/usr/lib/"*.o | head -10
 
-          # CoreMedia/CoreMedia.h is a 10.7+ public framework. UXP configure
-          # hard-requires it for VideoToolbox media decode support. On 10.6
-          # it exists only as a private framework without public headers.
-          # Symlink the framework (headers + link stub) from the runner's
-          # macOS 26 SDK so configure passes; at runtime on real 10.6 the
-          # framework will be weak-linked (deployment target = 10.6) and
-          # VideoToolbox decode simply won't be available.
-          HOST_SDK="$(xcrun --sdk macosx --show-sdk-path)"
-          SRC_FW="$HOST_SDK/System/Library/Frameworks/CoreMedia.framework"
-          DST_FW="${{ steps.sdk.outputs.sdk_path }}/System/Library/Frameworks/CoreMedia.framework"
-          if [ -d "$SRC_FW" ] && [ ! -e "$DST_FW" ]; then
-            ln -s "$SRC_FW" "$DST_FW"
-            echo "Symlinked CoreMedia.framework from host SDK"
-          fi
-
       - name: Write .mozconfig
         run: |
           cat > .mozconfig <<EOF
@@ -134,6 +119,14 @@ jobs:
           ac_add_options --enable-macos-target=10.6
           ac_add_options --with-macos-sdk=${{ steps.sdk.outputs.sdk_path }}
           ac_add_options --enable-application=basilisk
+          # CoreMedia/VideoToolbox is a 10.7+ public framework. On 10.6
+          # it's private and lacks headers; rather than weak-link a
+          # framework that won't be available at runtime anyway, disable
+          # the Apple media platform entirely. Media decode falls back to
+          # libvpx (VP8/VP9) and libavcodec (H.264 via the
+          # powerfox-ffmpeg-enabler dylibs), which is what users actually
+          # need on a 10.6 box.
+          ac_add_options --disable-apple-media
           ac_add_options --disable-tests
           ac_add_options --enable-optimize=-O2
           ac_add_options --disable-debug
