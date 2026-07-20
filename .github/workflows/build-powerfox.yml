@@ -26,7 +26,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          brew install yasm nasm
+          brew install yasm nasm llvm@16
+
+      - name: Configure clang-16
+        run: |
+          # Xcode 26.5's clang (LLVM ~19) rejects the 10.6 SDK's SecKeychain.h
+          # AUTH_TYPE_FIX_ macro as "expression is not an integral constant
+          # expression" because of stricter C99+ enforcement on multi-char
+          # constants like 'ntlm'. The upstream PowerFox build wiki recommends
+          # clang-16 (LLVM 16) from MacPorts, which is permissive enough.
+          # Homebrew's llvm@16 is the equivalent.
+          echo "CLANG16=/opt/homebrew/opt/llvm@16/bin/clang" >> "$GITHUB_ENV"
+          echo "CLANGXX16=/opt/homebrew/opt/llvm@16/bin/clang++" >> "$GITHUB_ENV"
+          /opt/homebrew/opt/llvm@16/bin/clang --version | head -2
 
       - name: Install Python 3.13
         uses: actions/setup-python@v6
@@ -100,11 +112,11 @@ jobs:
         run: |
           cat > .mozconfig <<EOF
           TARGET_CPU=x86_64
-          CC="clang -arch \$TARGET_CPU"
-          CXX="clang++ -stdlib=libc++ -arch \$TARGET_CPU"
+          CC="$CLANG16 -arch \$TARGET_CPU"
+          CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU"
 
-          export HOST_CC="clang -arch \$TARGET_CPU"
-          export HOST_CXX="clang++ -stdlib=libc++ -arch \$TARGET_CPU"
+          export HOST_CC="$CLANG16 -arch \$TARGET_CPU"
+          export HOST_CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU"
 
           RANLIB=ranlib
           AR=ar
