@@ -84,6 +84,18 @@ jobs:
           echo "Using 10.6 SDK at $SDK_PATH"
           echo "sdk_path=$SDK_PATH" >> "$GITHUB_OUTPUT"
 
+      - name: Overlay runtime objects
+        run: |
+          set -e
+          # phracker/MacOSX-SDKs omits binary .o files (crt1.o, dylib1.o,
+          # etc.). Without them, ld fails with "library 'crt1.10.6.o' not
+          # found". Overlay them from a small release asset on this fork.
+          curl -fsSL -o /tmp/runtime-objects.tar.gz \
+            https://github.com/startergo/powerfox-browser/releases/download/sdk-runtime-objects-10.6/MacOSX10.6.sdk-runtime-objects.tar.gz
+          tar -xzf /tmp/runtime-objects.tar.gz -C "${{ steps.sdk.outputs.sdk_path }}"
+          echo "Runtime objects installed:"
+          ls -la "${{ steps.sdk.outputs.sdk_path }}/usr/lib/"*.o | head -10
+
       - name: Write .mozconfig
         run: |
           cat > .mozconfig <<EOF
