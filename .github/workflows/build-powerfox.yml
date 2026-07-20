@@ -61,10 +61,10 @@ jobs:
           cat > .mozconfig <<EOF
           TARGET_CPU=x86_64
           CC="clang -arch \$TARGET_CPU"
-          CXX="clang++ -arch \$TARGET_CPU"
+          CXX="clang++ -stdlib=libc++ -arch \$TARGET_CPU"
 
           export HOST_CC="clang -arch \$TARGET_CPU"
-          export HOST_CXX="clang++ -arch \$TARGET_CPU"
+          export HOST_CXX="clang++ -stdlib=libc++ -arch \$TARGET_CPU"
 
           RANLIB=ranlib
           AR=ar
