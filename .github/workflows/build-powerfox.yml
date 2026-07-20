@@ -1,220 +1,121 @@
-name: Build PowerFox
+name: Build PowerFox (startergo fork)
+
+# Self-hosted CI on startergo/powerfox-browser.
+# Targets Mac OS X 10.6 x86_64 only. Skips the private Jazzzny/powerfox-sdk,
+# the PPC toolchain, FFmpeg, and the Snow Leopard libc++ fix script — none of
+# them are needed to produce a testable 10.6 x86_64 PowerFox.app for the
+# WebGL/GL fix in platform/gfx/gl/GLContext.cpp.
 
 on:
   workflow_dispatch:
-    inputs:
-      build_type:
-        description: 'Build Type'
-        required: true
-        type: choice
-        default: 'nightly'
-        options:
-          - nightly
-          - release
-      version:
-        description: 'Version Number'
-        required: false
-        type: string
-      tag_name:
-        description: 'Tag Name'
-        required: false
-        type: string
   push:
-    branches: [ "main" ]
+    branches: ["main"]
 
 jobs:
   build-powerfox:
     runs-on: macos-26
-    name: Build PowerFox ${{ matrix.artifact_suffix }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: "10.4"
-            config: g3
-            target: powerpc
-            artifact_suffix: 10.4-g3
-            app_name: PowerFox.app
-            ffmpeg_asset: 10.4-G3.zip
-          - os: "10.4"
-            config: g4
-            target: powerpc
-            artifact_suffix: 10.4-g4-7400
-            app_name: PowerFox.app
-            ffmpeg_asset: 10.4-G4-7400.zip
-          - os: "10.4"
-            config: g4e
-            target: powerpc
-            artifact_suffix: 10.4-g4-7450
-            app_name: PowerFox.app
-            ffmpeg_asset: 10.4-G4-7450.zip
-          - os: "10.4"
-            config: g5
-            target: powerpc
-            artifact_suffix: 10.4-g5
-            app_name: PowerFox.app
-            ffmpeg_asset: 10.4-G5.zip
-          - os: "10.4"
-            config: i386
-            target: i386
-            artifact_suffix: 10.4-i386
-            app_name: PowerFox.app
-            ffmpeg_asset: 10.4-i386.zip
-          - os: "10.4"
-            config: debug
-            target: powerpc
-            artifact_suffix: 10.4-debug
-            app_name: PowerFoxDebug.app
-            ffmpeg_asset: 10.4-G3.zip
-          - os: "10.5"
-            config: g4
-            target: powerpc
-            artifact_suffix: 10.5-g4
-            app_name: PowerFox.app
-            ffmpeg_asset: 10.5-G4.zip
-          - os: "10.5"
-            config: g5
-            target: powerpc
-            artifact_suffix: 10.5-g5
-            app_name: PowerFox.app
-            ffmpeg_asset: 10.5-G5.zip
-          - os: "10.5"
-            config: i386
-            target: i386
-            artifact_suffix: 10.5-i386
-            app_name: PowerFox.app
-            ffmpeg_asset: 10.5-i386.zip
-          - os: "10.5"
-            config: debug
-            target: powerpc
-            artifact_suffix: 10.5-debug
-            app_name: PowerFoxDebug.app
-            ffmpeg_asset: 10.5-G4.zip
-          - os: "10.6"
-            config: i386
-            target: i386
-            artifact_suffix: 10.6-i386
-            app_name: PowerFox.app
-            ffmpeg_asset: 10.6-i386.zip
-          - os: "10.6"
-            config: x86_64
-            target: x86_64
-            artifact_suffix: 10.6-x86_64
-            app_name: PowerFox.app
-            ffmpeg_asset: 10.6-x86_64.zip
-          - os: "10.6"
-            config: debug
-            target: i386
-            artifact_suffix: 10.6-debug
-            app_name: PowerFoxDebug.app
-            ffmpeg_asset: 10.6-i386.zip
+    name: Build PowerFox 10.6 x86_64
     permissions:
       contents: read
 
     steps:
-      - name: Checkout PowerFox SDK
-        env:
-            GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
-        run: |
-          git clone --depth 1 --single-branch --progress https://oauth2:${GITHUB_TOKEN}@github.com/Jazzzny/powerfox-sdk.git
-
-      - name: Install SDK
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
-        run: |
-          gh release download 3.0 -p "powerfox-sdk-3.0.zip" --repo Jazzzny/powerfox-sdk
-          sudo mkdir -p /opt/
-          sudo unzip -q powerfox-sdk-3.0.zip -d /opt
+      - name: Checkout PowerFox superproject
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
 
       - name: Install dependencies
-        run: brew install yasm nasm
+        run: |
+          brew install yasm nasm
 
       - name: Install Python 3.13
         uses: actions/setup-python@v6
         with:
           python-version: 3.13
 
-      - name: Clone PowerFox source
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Locate oldest available macOS SDK
+        id: sdk
         run: |
-          git clone --depth 1 --single-branch --progress https://github.com/Jazzzny/powerfox-browser.git
-          cd powerfox-browser
-          git clone --depth 1 --single-branch --progress "https://oauth2:${GITHUB_TOKEN}@github.com/Jazzzny/platform-uxp.git" platform
-
-      - name: Build PowerFox
-        run: |
-          cp "powerfox-sdk/${{ matrix.os }}/.mozconfig-${{ matrix.config }}" powerfox-browser/.mozconfig
-          cd powerfox-browser
-          if [ "${{ matrix.os }}" != "10.6" ]; then
-            export PATH="/opt/gcc-powerpc/bin:${PATH}"
-          fi
-
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.build_type }}" = "release" ]; then
-            BASILISK_VERSION_STRING="${{ inputs.version }}"
+          set -e
+          XC_SDKS="/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs"
+          CLT_SDKS="/Library/Developer/CommandLineTools/SDKs"
+          mkdir -p /tmp/sdks
+          SDK_PATH=""
+          # Prefer 10.6 if available
+          for base in "$XC_SDKS" "$CLT_SDKS"; do
+            if [ -d "$base/MacOSX10.6.sdk" ]; then
+              SDK_PATH="$base/MacOSX10.6.sdk"
+              break
+            fi
+          done
+          if [ -n "$SDK_PATH" ]; then
+            echo "Using 10.6 SDK at $SDK_PATH"
+            echo "with_sdk=--with-macos-sdk=$SDK_PATH" >> "$GITHUB_OUTPUT"
+            echo "macos_target=10.6" >> "$GITHUB_OUTPUT"
           else
-            BASILISK_VERSION_STRING="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)"
+            # Fall back to whatever Xcode ships; set deployment target to 10.6
+            # so weak-linking handles the missing APIs at runtime.
+            DEFAULT_SDK="$(xcrun --show-osx-sdk-path 2>/dev/null || true)"
+            echo "10.6 SDK not found; falling back to $DEFAULT_SDK with --enable-macos-target=10.6"
+            echo "with_sdk=" >> "$GITHUB_OUTPUT"
+            echo "macos_target=10.6" >> "$GITHUB_OUTPUT"
           fi
 
-          echo "POWERFOX_SUFFIX=${{ matrix.artifact_suffix }}" >> $GITHUB_ENV
-          echo "BASILISK_VERSION=$BASILISK_VERSION_STRING" >> $GITHUB_ENV
-          export BASILISK_VERSION="$BASILISK_VERSION_STRING"
+      - name: Write .mozconfig
+        run: |
+          cat > .mozconfig <<EOF
+          TARGET_CPU=x86_64
+          CC="clang -arch \$TARGET_CPU"
+          CXX="clang++ -arch \$TARGET_CPU"
 
+          export HOST_CC=clang
+          export HOST_CXX=clang++
+
+          RANLIB=ranlib
+          AR=ar
+          AS=\$CC
+          LD=ld
+          STRIP=strip
+          OTOOL=otool
+          export CC CXX HOST_CC HOST_CXX RANLIB AR AS LD STRIP OTOOL
+
+          ac_add_options --target=x86_64-apple-darwin10.8.0
+          ac_add_options --enable-macos-target=${{ steps.sdk.outputs.macos_target }}
+          ${{ steps.sdk.outputs.with_sdk }}
+          ac_add_options --enable-application=basilisk
+          ac_add_options --disable-tests
+          ac_add_options --enable-optimize=-O2
+          ac_add_options --disable-debug
+          ac_add_options --disable-crashreporter
+          ac_add_options --disable-necko-wifi
+          ac_add_options --disable-safe-browsing
+
+          export MOZ_TELEMETRY_REPORTING=0
+          export MOZ_ADDON_SIGNING=0
+          export MOZ_REQUIRE_SIGNING=0
+          EOF
+          echo "===== .mozconfig ====="
+          cat .mozconfig
+
+      - name: Build
+        run: |
+          export BASILISK_VERSION="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)"
           ./mach build
           ./mach package
 
-      - name: Copy FFmpeg libraries
-        env:
-          GITHUB_TOKEN: ${{ secrets.REPO_TOKEN }}
+      - name: Zip PowerFox.app
         run: |
-          APP_PATH="powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/${{ matrix.app_name }}"
-          gh release download ffmpeg-6.1.6 -p "${{ matrix.ffmpeg_asset }}" --repo Jazzzny/powerfox-ffmpeg-enabler
-          FFMPEG_TMP="${RUNNER_TEMP}/powerfox-ffmpeg-${{ matrix.artifact_suffix }}"
-          rm -rf "$FFMPEG_TMP"
-          mkdir -p "$FFMPEG_TMP"
-          unzip -q -o "${{ matrix.ffmpeg_asset }}" -d "$FFMPEG_TMP"
-
-          FFMPEG_DIR="$FFMPEG_TMP/${{ matrix.ffmpeg_asset }}"
-          FFMPEG_DIR="${FFMPEG_DIR%.zip}"
-          cp -p "$FFMPEG_DIR/libavcodec.60.dylib" "$APP_PATH/Contents/MacOS/"
-          cp -p "$FFMPEG_DIR/libavutil.58.dylib" "$APP_PATH/Contents/MacOS/"
-
-      - name: Fix Snow Leopard libc++ paths
-        if: matrix.os == '10.6'
-        run: |
-          bash powerfox-sdk/fix-snowleopard-libcxx.sh "powerfox-browser/obj-${{ matrix.target }}-apple-darwin"
-
-      - name: Zip PowerFox Artifact
-        run: |
-          APP_NAME="${{ matrix.app_name }}"
-          APP_PATH="powerfox-browser/obj-${{ matrix.target }}-apple-darwin/dist/powerfox/$APP_NAME"
+          APP_PATH="obj-x86_64-apple-darwin/dist/powerfox/PowerFox.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "##[error]$APP_PATH not found"
+            ls -la obj-x86_64-apple-darwin/dist/ 2>&1 | head -20
+            exit 1
+          fi
           cp -R "$APP_PATH" .
-          zip -qry "powerfox-${{ env.BASILISK_VERSION }}-${{ env.POWERFOX_SUFFIX }}.zip" "$APP_NAME"
-          rm -rf "$APP_NAME"
+          zip -qry "powerfox-${BASILISK_VERSION}-10.6-x86_64.zip" PowerFox.app
 
-      - name: Upload PowerFox Artifact
+      - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: powerfox-${{ env.BASILISK_VERSION }}-${{ env.POWERFOX_SUFFIX }}
-          path: powerfox-${{ env.BASILISK_VERSION }}-${{ env.POWERFOX_SUFFIX }}.zip
-
-  create-release:
-    needs: build-powerfox
-    if: github.event_name == 'workflow_dispatch' && inputs.build_type == 'release'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v8
-        with:
-          path: ./artifacts
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ inputs.tag_name }}
-          name: ${{ inputs.version }}
-          draft: true
-          token: ${{ secrets.REPO_TOKEN }}
-          files: ./artifacts/**/*.zip
+          name: powerfox-10.6-x86_64
+          path: powerfox-*.zip
