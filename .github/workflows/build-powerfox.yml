@@ -68,8 +68,8 @@ jobs:
           CC="clang -arch \$TARGET_CPU"
           CXX="clang++ -arch \$TARGET_CPU"
 
-          export HOST_CC=clang
-          export HOST_CXX=clang++
+          export HOST_CC="clang -arch \$TARGET_CPU"
+          export HOST_CXX="clang++ -arch \$TARGET_CPU"
 
           RANLIB=ranlib
           AR=ar
@@ -80,6 +80,7 @@ jobs:
           export CC CXX HOST_CC HOST_CXX RANLIB AR AS LD STRIP OTOOL
 
           ac_add_options --target=x86_64-apple-darwin10.8.0
+          ac_add_options --host=x86_64-apple-darwin
           ac_add_options --enable-macos-target=${{ steps.sdk.outputs.macos_target }}
           ${{ steps.sdk.outputs.with_sdk }}
           ac_add_options --enable-application=basilisk
@@ -98,10 +99,16 @@ jobs:
           cat .mozconfig
 
       - name: Build
+        env:
+          # Run mach under Rosetta so host arch (x86_64) matches the target
+          # arch. Without this, UXP's configure infers the host triple as
+          # "arm-apple-darwin..." from the arm64 runner and clang falls back
+          # to -arch armv4t, which the linker rejects.
+          MACH_BUILD_PYTHON_NATIVE: "1"
         run: |
-          export BASILISK_VERSION="nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)"
-          ./mach build
-          ./mach package
+          arch -x86_64 ./mach build
+          arch -x86_64 ./mach package
+          echo "BASILISK_VERSION=nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)" >> "$GITHUB_ENV"
 
       - name: Zip PowerFox.app
         run: |
