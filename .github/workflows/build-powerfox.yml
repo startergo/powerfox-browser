@@ -110,24 +110,37 @@ jobs:
 
           # Compat declarations for 10.6-private functions (memmem,
           # strndup, arc4random_buf, etc.) that exist in libSystem but
-          # aren't declared in the SDK headers. -include'd globally via
-          # the CC/CXX wrapper in the mozconfig.
-          curl -fsSL -o /Users/runner/MacOSX-SDKs/MacOSX10.6-compat-decls.h \
-            https://github.com/startergo/powerfox-browser/releases/download/sdk-runtime-objects-10.6/MacOSX10.6-compat-decls.h
-          ls -la /Users/runner/MacOSX-SDKs/MacOSX10.6-compat-decls.h
+          # aren't declared in the SDK headers. Append them to the SDK's
+          # own <string.h> and <stdlib.h> so only code that actually
+          # includes those headers sees the declarations (force-including
+          # via CC/CXX wrapper pollutes preprocessor-only output and
+          # breaks Python scripts that eval() clang -E output, e.g.
+          # GenerateCSSPropsGenerated.py).
+          SDK="${{ steps.sdk.outputs.sdk_path }}"
+          cat >> "$SDK/usr/include/string.h" <<'EOF'
+
+/* Added by PowerFox CI: 10.6-private BSD functions that exist in
+ * libSystem but aren't declared in the 10.6 SDK headers (they became
+ * public in 10.7). UXP's AC_CHECK_FUNCS link check finds them. */
+char *strndup(const char *, size_t);
+void *memmem(const void *, size_t, const void *, size_t);
+EOF
+          cat >> "$SDK/usr/include/stdlib.h" <<'EOF'
+
+/* Added by PowerFox CI: 10.6-private BSD functions (see string.h note). */
+void arc4random_buf(void *, size_t);
+unsigned int arc4random(void);
+EOF
+          echo "Appended compat declarations to 10.6 SDK string.h and stdlib.h"
+          tail -5 "$SDK/usr/include/string.h"
+          tail -5 "$SDK/usr/include/stdlib.h"
 
       - name: Write .mozconfig
         run: |
           cat > .mozconfig <<EOF
           TARGET_CPU=x86_64
-          # UXP's configure rewrites CFLAGS/CXXFLAGS from scratch, so to
-          # inject compiler flags that survive configure we ride them on
-          # the CC/CXX wrapper. Force-include the 10.6-compat header
-          # (provides prototypes for memmem/strndup/arc4random_buf/etc.
-          # that exist in libSystem but aren't in the 10.6 SDK headers)
-          # so both C and C++ files can call them.
-          CC="$CLANG16 -arch \$TARGET_CPU -include /Users/runner/MacOSX-SDKs/MacOSX10.6-compat-decls.h"
-          CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU -include /Users/runner/MacOSX-SDKs/MacOSX10.6-compat-decls.h"
+          CC="$CLANG16 -arch \$TARGET_CPU"
+          CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU"
 
           export HOST_CC="$CLANG16 -arch \$TARGET_CPU"
           export HOST_CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU"
