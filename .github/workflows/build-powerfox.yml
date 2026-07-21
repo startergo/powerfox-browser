@@ -186,12 +186,15 @@ jobs:
 
       - name: Zip PowerFox.app
         run: |
-          APP_PATH="obj-x86_64-apple-darwin/dist/powerfox/PowerFox.app"
-          if [ ! -d "$APP_PATH" ]; then
-            echo "##[error]$APP_PATH not found"
-            ls -la obj-x86_64-apple-darwin/dist/ 2>&1 | head -20
+          # The objdir name depends on --target= in the mozconfig; match
+          # any obj-x86_64-apple-darwin* directory to be robust.
+          APP_PATH="$(find obj-* -maxdepth 4 -type d -name 'PowerFox.app' -path '*/dist/powerfox/*' 2>/dev/null | head -1)"
+          if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
+            echo "##[error]PowerFox.app not found under any obj-* directory"
+            ls -la obj-*/dist/ 2>&1 | head -20
             exit 1
           fi
+          echo "Found: $APP_PATH"
           cp -R "$APP_PATH" .
           zip -qry "powerfox-${BASILISK_VERSION}-10.6-x86_64.zip" PowerFox.app
 
