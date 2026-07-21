@@ -139,6 +139,11 @@ jobs:
           # powerfox-ffmpeg-enabler dylibs), which is what users actually
           # need on a 10.6 box.
           ac_add_options --disable-apple-media
+          # WebRTC's mac video_capture uses AVFoundation/AVFoundation.h
+          # (10.7+). Disable WebRTC entirely for this test build - it's
+          # not needed to validate the WebGL/GL fix, and the qtkit
+          # alternative would need its own bring-up.
+          ac_add_options --disable-webrtc
           ac_add_options --disable-tests
           ac_add_options --enable-optimize=-O2
           ac_add_options --disable-debug
