@@ -117,20 +117,8 @@ jobs:
           # breaks Python scripts that eval() clang -E output, e.g.
           # GenerateCSSPropsGenerated.py).
           SDK="${{ steps.sdk.outputs.sdk_path }}"
-          cat >> "$SDK/usr/include/string.h" <<'EOF'
-
-/* Added by PowerFox CI: 10.6-private BSD functions that exist in
- * libSystem but aren't declared in the 10.6 SDK headers (they became
- * public in 10.7). UXP's AC_CHECK_FUNCS link check finds them. */
-char *strndup(const char *, size_t);
-void *memmem(const void *, size_t, const void *, size_t);
-EOF
-          cat >> "$SDK/usr/include/stdlib.h" <<'EOF'
-
-/* Added by PowerFox CI: 10.6-private BSD functions (see string.h note). */
-void arc4random_buf(void *, size_t);
-unsigned int arc4random(void);
-EOF
+          printf '\n/* Added by PowerFox CI: 10.6-private BSD functions. */\nchar *strndup(const char *, size_t);\nvoid *memmem(const void *, size_t, const void *, size_t);\n' >> "$SDK/usr/include/string.h"
+          printf '\n/* Added by PowerFox CI: 10.6-private BSD functions. */\nvoid arc4random_buf(void *, size_t);\nunsigned int arc4random(void);\n' >> "$SDK/usr/include/stdlib.h"
           echo "Appended compat declarations to 10.6 SDK string.h and stdlib.h"
           tail -5 "$SDK/usr/include/string.h"
           tail -5 "$SDK/usr/include/stdlib.h"
