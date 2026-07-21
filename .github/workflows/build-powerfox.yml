@@ -117,10 +117,14 @@ jobs:
           # breaks Python scripts that eval() clang -E output, e.g.
           # GenerateCSSPropsGenerated.py).
           SDK="${{ steps.sdk.outputs.sdk_path }}"
-          printf '\n/* Added by PowerFox CI: 10.6-private BSD functions. */\n#ifdef __cplusplus\nextern "C" {\n#endif\nchar *strndup(const char *, size_t);\nvoid *memmem(const void *, size_t, const void *, size_t);\n#ifdef __cplusplus\n}\n#endif\n' >> "$SDK/usr/include/string.h"
-          printf '\n/* Added by PowerFox CI: 10.6-private BSD functions. */\n#ifdef __cplusplus\nextern "C" {\n#endif\nvoid arc4random_buf(void *, size_t);\nunsigned int arc4random(void);\n#ifdef __cplusplus\n}\n#endif\n' >> "$SDK/usr/include/stdlib.h"
-          printf '\n/* Added by PowerFox CI: macOS-private math function. */\n#ifdef __cplusplus\nextern "C" {\n#endif\nvoid __sincos(double, double *, double *);\n#ifdef __cplusplus\n}\n#endif\n' >> "$SDK/usr/include/math.h"
-          echo "Appended compat declarations to 10.6 SDK string.h, stdlib.h, math.h"
+          # Note: do NOT add prototypes for strndup/memmem/arc4random_buf/
+          # arc4random/__sincos to the SDK headers. Configure's AC_CHECK_FUNCS
+          # detects them by linking against the build host's libSystem (macOS
+          # 26), but they don't exist in 10.6's libSystem at runtime, causing
+          # dyld to abort with "Symbol not found: _strndup". Instead, override
+          # the configure cache variables via the mozconfig (below) to tell
+          # UXP/expat these functions don't exist, so they use their own
+          # fallbacks (manual implementation or /dev/urandom).
 
       - name: Write .mozconfig
         run: |
@@ -168,6 +172,19 @@ jobs:
           export MOZ_TELEMETRY_REPORTING=0
           export MOZ_ADDON_SIGNING=0
           export MOZ_REQUIRE_SIGNING=0
+
+          # Override AC_CHECK_FUNCS results: configure links against the
+          # build-host libSystem (macOS 26) and finds these 10.7+ functions,
+          # but 10.6's runtime libSystem doesn't have them, causing dyld
+          # load failures. Force "not found" so UXP/expat use their own
+          # fallbacks (manual impl for strndup/memmem, /dev/urandom for
+          # arc4random*, separate sin+cos calls for __sincos).
+          export ac_cv_func_strndup=no
+          export ac_cv_func_memmem=no
+          export ac_cv_func_arc4random=no
+          export ac_cv_func_arc4random_buf=no
+          export ac_cv_func___sincos=no
+          export ac_cv_func_sincos=no
           EOF
           echo "===== .mozconfig ====="
           cat .mozconfig
