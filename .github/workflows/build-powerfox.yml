@@ -112,8 +112,14 @@ jobs:
         run: |
           cat > .mozconfig <<EOF
           TARGET_CPU=x86_64
-          CC="$CLANG16 -arch \$TARGET_CPU"
-          CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU"
+          # UXP's configure rewrites CFLAGS/CXXFLAGS from scratch, so to
+          # inject compiler flags that survive configure we ride them on
+          # the CC/CXX wrapper. -Wno-error=implicit-function-declaration
+          # is needed because various 10.6-era functions (strndup,
+          # arc4random_buf, etc.) exist in libSystem but aren't declared
+          # in the 10.6 SDK headers (they became public in 10.7).
+          CC="$CLANG16 -arch \$TARGET_CPU -Wno-error=implicit-function-declaration"
+          CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU -Wno-error=implicit-function-declaration"
 
           export HOST_CC="$CLANG16 -arch \$TARGET_CPU"
           export HOST_CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU"
