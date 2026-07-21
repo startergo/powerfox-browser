@@ -119,9 +119,8 @@ jobs:
           SDK="${{ steps.sdk.outputs.sdk_path }}"
           printf '\n/* Added by PowerFox CI: 10.6-private BSD functions. */\n#ifdef __cplusplus\nextern "C" {\n#endif\nchar *strndup(const char *, size_t);\nvoid *memmem(const void *, size_t, const void *, size_t);\n#ifdef __cplusplus\n}\n#endif\n' >> "$SDK/usr/include/string.h"
           printf '\n/* Added by PowerFox CI: 10.6-private BSD functions. */\n#ifdef __cplusplus\nextern "C" {\n#endif\nvoid arc4random_buf(void *, size_t);\nunsigned int arc4random(void);\n#ifdef __cplusplus\n}\n#endif\n' >> "$SDK/usr/include/stdlib.h"
-          echo "Appended compat declarations to 10.6 SDK string.h and stdlib.h"
-          tail -10 "$SDK/usr/include/string.h"
-          tail -10 "$SDK/usr/include/stdlib.h"
+          printf '\n/* Added by PowerFox CI: macOS-private math function. */\n#ifdef __cplusplus\nextern "C" {\n#endif\nvoid __sincos(double, double *, double *);\n#ifdef __cplusplus\n}\n#endif\n' >> "$SDK/usr/include/math.h"
+          echo "Appended compat declarations to 10.6 SDK string.h, stdlib.h, math.h"
 
       - name: Write .mozconfig
         run: |
