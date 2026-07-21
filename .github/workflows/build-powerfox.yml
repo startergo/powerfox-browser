@@ -249,12 +249,16 @@ jobs:
           cp -R "$APP_SRC" "./PowerFox.app"
           zip -qry "powerfox-${BASILISK_VERSION}-10.6-x86_64.zip" PowerFox.app
 
-          # Also pick up the DMG if present (the standard macOS distribution format)
-          DMG_SRC="$(find "$DIST_DIR" -maxdepth 1 -type f -name '*.dmg' 2>/dev/null | head -1)"
-          if [ -n "$DMG_SRC" ]; then
-            cp "$DMG_SRC" "powerfox-${BASILISK_VERSION}-10.6-x86_64.dmg"
-            ls -la "powerfox-${BASILISK_VERSION}-10.6-x86_64.dmg"
-          fi
+          # Build a fresh DMG from the .app folder AFTER the CoreText fix.
+          # The DMG produced by `./mach package` was built before the
+          # install_name_tool step ran, so it still contains the broken
+          # XUL. Rebuilding from the modified .app ensures the DMG matches
+          # the ZIP.
+          rm -f "powerfox-${BASILISK_VERSION}-10.6-x86_64.dmg"
+          hdiutil create -volname Nightly -srcfolder "PowerFox.app" \
+            -fs HFS+ -format UDBZ -imagekey zlib-level=9 \
+            "powerfox-${BASILISK_VERSION}-10.6-x86_64.dmg" 2>&1 | tail -3
+          ls -la "powerfox-${BASILISK_VERSION}-10.6-x86_64.dmg"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
