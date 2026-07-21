@@ -112,10 +112,9 @@ jobs:
           # strndup, arc4random_buf, etc.) that exist in libSystem but
           # aren't declared in the SDK headers. -include'd globally via
           # the CC/CXX wrapper in the mozconfig.
-          curl -fsSL -o /tmp/MacOSX10.6-compat-decls.h \
+          curl -fsSL -o /Users/runner/MacOSX-SDKs/MacOSX10.6-compat-decls.h \
             https://github.com/startergo/powerfox-browser/releases/download/sdk-runtime-objects-10.6/MacOSX10.6-compat-decls.h
-          sudo mv /tmp/MacOSX10.6-compat-decls.h /usr/local/include/
-          ls -la /usr/local/include/MacOSX10.6-compat-decls.h
+          ls -la /Users/runner/MacOSX-SDKs/MacOSX10.6-compat-decls.h
 
       - name: Write .mozconfig
         run: |
@@ -127,8 +126,8 @@ jobs:
           # (provides prototypes for memmem/strndup/arc4random_buf/etc.
           # that exist in libSystem but aren't in the 10.6 SDK headers)
           # so both C and C++ files can call them.
-          CC="$CLANG16 -arch \$TARGET_CPU -include /usr/local/include/MacOSX10.6-compat-decls.h"
-          CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU -include /usr/local/include/MacOSX10.6-compat-decls.h"
+          CC="$CLANG16 -arch \$TARGET_CPU -include /Users/runner/MacOSX-SDKs/MacOSX10.6-compat-decls.h"
+          CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU -include /Users/runner/MacOSX-SDKs/MacOSX10.6-compat-decls.h"
 
           export HOST_CC="$CLANG16 -arch \$TARGET_CPU"
           export HOST_CXX="$CLANGXX16 -stdlib=libc++ -arch \$TARGET_CPU"
