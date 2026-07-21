@@ -184,22 +184,41 @@ jobs:
           arch -x86_64 ./mach package
           echo "BASILISK_VERSION=nightly-$(git rev-parse --short HEAD)-$(date +%Y%m%d)" >> "$GITHUB_ENV"
 
-      - name: Zip PowerFox.app
+      - name: Package PowerFox.app
         run: |
-          # The objdir name depends on --target= in the mozconfig; match
-          # any obj-x86_64-apple-darwin* directory to be robust.
-          APP_PATH="$(find obj-* -maxdepth 4 -type d -name 'PowerFox.app' -path '*/dist/powerfox/*' 2>/dev/null | head -1)"
-          if [ -z "$APP_PATH" ] || [ ! -d "$APP_PATH" ]; then
-            echo "##[error]PowerFox.app not found under any obj-* directory"
-            ls -la obj-*/dist/ 2>&1 | head -20
+          # mach package produces Nightly.app (build-time name) and a .dmg
+          # under obj-*/dist/. Find whatever's there and upload both.
+          DIST_DIR="$(find obj-* -maxdepth 2 -type d -name 'dist' 2>/dev/null | head -1)"
+          if [ -z "$DIST_DIR" ]; then
+            echo "##[error]No obj-*/dist directory found"
+            ls -la obj-* 2>&1 | head -20
             exit 1
           fi
-          echo "Found: $APP_PATH"
-          cp -R "$APP_PATH" .
+          echo "Dist dir: $DIST_DIR"
+          ls -la "$DIST_DIR" | head -25
+
+          # Locate the .app bundle (named either PowerFox.app or Nightly.app)
+          APP_SRC="$(find "$DIST_DIR" -maxdepth 3 -type d -name '*.app' 2>/dev/null | head -1)"
+          if [ -z "$APP_SRC" ]; then
+            echo "##[error]No .app bundle found in $DIST_DIR"
+            exit 1
+          fi
+          APP_NAME="$(basename "$APP_SRC")"
+          echo "Found app: $APP_SRC (name: $APP_NAME)"
+          cp -R "$APP_SRC" "./PowerFox.app"
           zip -qry "powerfox-${BASILISK_VERSION}-10.6-x86_64.zip" PowerFox.app
+
+          # Also pick up the DMG if present (the standard macOS distribution format)
+          DMG_SRC="$(find "$DIST_DIR" -maxdepth 1 -type f -name '*.dmg' 2>/dev/null | head -1)"
+          if [ -n "$DMG_SRC" ]; then
+            cp "$DMG_SRC" "powerfox-${BASILISK_VERSION}-10.6-x86_64.dmg"
+            ls -la "powerfox-${BASILISK_VERSION}-10.6-x86_64.dmg"
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
           name: powerfox-10.6-x86_64
-          path: powerfox-*.zip
+          path: |
+            powerfox-*.zip
+            powerfox-*.dmg
