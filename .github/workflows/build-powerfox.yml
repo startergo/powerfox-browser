@@ -222,6 +222,27 @@ jobs:
           fi
           APP_NAME="$(basename "$APP_SRC")"
           echo "Found app: $APP_SRC (name: $APP_NAME)"
+
+          # On 10.6, CoreText is a sub-framework of ApplicationServices, not
+          # a top-level framework. The linker (ld64) doesn't honor -isysroot
+          # for framework search and falls back to the build host's macOS 26
+          # SDK, which has CoreText at top-level. Result: binaries reference
+          # /System/Library/Frameworks/CoreText.framework/... which doesn't
+          # exist on 10.6, causing dyld to fail loading XUL. Rewrite the
+          # path in every Mach-O inside the .app bundle to the correct
+          # 10.6 sub-framework location.
+          OLD="/System/Library/Frameworks/CoreText.framework/Versions/A/CoreText"
+          NEW="/System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/CoreText.framework/Versions/A/CoreText"
+          echo "Rewriting CoreText load paths..."
+          find "$APP_SRC/Contents/MacOS" -type f \( -name "*.dylib" -o -name "powerfox" -o -perm +111 \) | while read -r bin; do
+            if file "$bin" 2>/dev/null | grep -q "Mach-O"; then
+              if otool -L "$bin" 2>/dev/null | grep -q "$OLD"; then
+                install_name_tool -change "$OLD" "$NEW" "$bin"
+                echo "  fixed: $bin"
+              fi
+            fi
+          done
+
           cp -R "$APP_SRC" "./PowerFox.app"
           zip -qry "powerfox-${BASILISK_VERSION}-10.6-x86_64.zip" PowerFox.app
 
