@@ -214,14 +214,17 @@ jobs:
           echo "Dist dir: $DIST_DIR"
           ls -la "$DIST_DIR" | head -25
 
-          # Locate the .app bundle (named either PowerFox.app or Nightly.app)
-          APP_SRC="$(find "$DIST_DIR" -maxdepth 3 -type d -name '*.app' 2>/dev/null | head -1)"
+          # Locate the .app bundle. The find returns multiple matches
+          # (plugin-container.app is a small helper), so pick the one that
+          # contains a MacOS/powerfox executable - that's the real main app.
+          APP_SRC="$(find "$DIST_DIR" -maxdepth 4 -type d -name '*.app' 2>/dev/null | while read -r d; do if [ -f "$d/Contents/MacOS/powerfox" ]; then echo "$d"; break; fi; done)"
           if [ -z "$APP_SRC" ]; then
-            echo "##[error]No .app bundle found in $DIST_DIR"
+            echo "##[error]No main .app bundle (with MacOS/powerfox) found in $DIST_DIR"
+            find "$DIST_DIR" -maxdepth 4 -name '*.app' 2>&1 | head -10
             exit 1
           fi
           APP_NAME="$(basename "$APP_SRC")"
-          echo "Found app: $APP_SRC (name: $APP_NAME)"
+          echo "Found main app: $APP_SRC (name: $APP_NAME)"
 
           # On 10.6, CoreText is a sub-framework of ApplicationServices, not
           # a top-level framework. The linker (ld64) doesn't honor -isysroot
