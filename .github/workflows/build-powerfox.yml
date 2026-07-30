@@ -246,6 +246,24 @@ jobs:
             fi
           done
 
+          # On 10.6.8, the entire AudioUnit API surface (_AudioComponent*,
+          # _AudioUnit*, _AudioOutputUnit*, _MusicDevice*, _AudioCodec*) is
+          # defined in AudioUnit.framework, not AudioToolbox.framework. The
+          # build SDK's headers expose these symbols via AudioToolbox (Apple
+          # merged AudioUnit into AudioToolbox in 10.7 and back-filled the
+          # headers), so the linker records AudioToolbox as the source
+          # library in XUL's lazy-bind opcodes. At runtime on 10.6.8,
+          # AudioToolbox does not export them (they're undefined references
+          # satisfied by AudioUnit), so dyld aborts on the first MediaPlayback
+          # thread with "Symbol not found: _AudioComponentFindNext" (or any
+          # other _AudioUnit* symbol the media pipeline touches first).
+          # Rewrite the library ordinal for every AudioUnit-framework export
+          # from AudioToolbox -> AudioUnit. The patcher resolves ordinals
+          # dynamically from LC_LOAD_DYLIB order, so it survives link-order
+          # drift. Idempotent: exit 0 if already patched or not referenced.
+          echo "Patching AudioUnit bind opcodes for 10.6..."
+          python3 tools/patch_audiounit_binds.py "$APP_SRC/Contents/MacOS/XUL"
+
           cp -R "$APP_SRC" "./PowerFox.app"
           zip -qry "powerfox-${BASILISK_VERSION}-10.6-x86_64.zip" PowerFox.app
 
