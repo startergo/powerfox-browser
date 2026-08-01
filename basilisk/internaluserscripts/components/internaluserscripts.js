@@ -94,9 +94,28 @@ InternalUserscriptsService.prototype = {
     try {
       let doc = win.document;
       let uri = doc && doc.documentURIObject;
-      if (uri && (uri.schemeIs("chrome") || uri.schemeIs("resource"))) {
+      if (!uri) {
         return;
       }
+      if (uri.schemeIs("chrome") || uri.schemeIs("resource")) {
+        return;
+      }
+      // Skip Cloudflare challenge/analytics documents. These scripts are
+      // sensitive to environment tampering; injecting polyfills raises
+      // the bot-detection risk score and can push Turnstile into heavier
+      // (slower) challenge code paths.
+      try {
+        let host = String(uri.host || "").toLowerCase();
+        let path = String(uri.path || "");
+        if (
+          host === "challenges.cloudflare.com" ||
+          host === "cloudflare-insights.com" ||
+          path.indexOf("/cdn-cgi/challenge-platform/") !== -1 ||
+          path.indexOf("/cdn-cgi/cf-challenge") !== -1
+        ) {
+          return;
+        }
+      } catch (e) {}
     } catch (e) {}
     let contentWin = win.wrappedJSObject || win;
     let logPolyfill = function (name, source) {
