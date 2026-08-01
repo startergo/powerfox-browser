@@ -64,12 +64,17 @@
 
     return new PromiseCtor(function (resolve, reject) {
       var settled = false;
+      var timer = null;
 
       function cleanup() {
         if (settled) {
           return;
         }
         settled = true;
+        if (timer !== null) {
+          try { global.clearTimeout(timer); } catch (e) {}
+          timer = null;
+        }
         img.removeEventListener("load", onLoad, false);
         img.removeEventListener("error", onError, false);
       }
@@ -86,6 +91,17 @@
 
       img.addEventListener("load", onLoad, false);
       img.addEventListener("error", onError, false);
+
+      // Safety net: if neither load nor error fires (CORS-blocked,
+      // cached-stale, network stall, src swapped after decode() was
+      // called), settle so callers don't wait forever. Native decode()
+      // has no timeout; this is a polyfill-specific guard.
+      try {
+        timer = global.setTimeout(function () {
+          cleanup();
+          reject(new Error("Image decode timed out"));
+        }, 30000);
+      } catch (e) {}
 
       if (hasLoadedImage(img)) {
         cleanup();
