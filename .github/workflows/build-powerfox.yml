@@ -264,6 +264,19 @@ jobs:
           echo "Patching AudioUnit bind opcodes for 10.6..."
           python3 tools/patch_audiounit_binds.py "$APP_SRC/Contents/MacOS/XUL"
 
+          # Bundle FFmpeg dylibs (H.264/AAC via libavcodec) from the public
+          # powerfox-ffmpeg-enabler release — no token required. Mirrors the
+          # upstream workflow's ffmpeg step for the 10.6 x86_64 target.
+          # Zip layout: 10.6-x86_64/{libavcodec.61.dylib,libavutil.59.dylib}.
+          gh release download ffmpeg-7.1.5 -p "10.6-x86_64.zip" \
+            --repo Jazzzny/powerfox-ffmpeg-enabler
+          FFMPEG_TMP="${RUNNER_TEMP}/powerfox-ffmpeg"
+          rm -rf "$FFMPEG_TMP" && mkdir -p "$FFMPEG_TMP"
+          unzip -q -o "10.6-x86_64.zip" -d "$FFMPEG_TMP"
+          cp -p "$FFMPEG_TMP/10.6-x86_64/libavcodec.61.dylib" "$APP_SRC/Contents/MacOS/"
+          cp -p "$FFMPEG_TMP/10.6-x86_64/libavutil.59.dylib" "$APP_SRC/Contents/MacOS/"
+          otool -D "$APP_SRC/Contents/MacOS/libavcodec.61.dylib" | head -2
+
           cp -R "$APP_SRC" "./PowerFox.app"
           zip -qry "powerfox-${BASILISK_VERSION}-10.6-x86_64.zip" PowerFox.app
 
