@@ -62,7 +62,7 @@ pref("extensions.getAddons.get.url", "https://@AM_DOMAIN@/?component=integration
 pref("extensions.getAddons.getWithPerformance.url", "https://@AM_DOMAIN@/?component=integration&type=internal&request=get&addonguid=%IDS%&os=%OS%&version=%VERSION%");
 pref("extensions.getAddons.search.browseURL", "https://@AM_DOMAIN@/search/?terms=%TERMS%");
 pref("extensions.getAddons.search.url", "https://@AM_DOMAIN@/?component=integration&type=internal&request=search&q=%TERMS%&locale=%LOCALE%&os=%OS%&version=%VERSION%");
-pref("extensions.webservice.discoverURL", "http://@AM_DOMAIN@/?component=discover");
+pref("extensions.webservice.discoverURL", "https://powerfox.org/addons-in-browser.html");
 pref("extensions.getAddons.recommended.url", "https://@AM_DOMAIN@/?component=integration&type=internal&request=recommended&locale=%LOCALE%&os=%OS%");
 pref("extensions.getAddons.browseAddons", "http://@AM_DOMAIN@/");
 pref("extensions.getAddons.recommended.browseURL", "https://@AM_DOMAIN@/?component=integration&type=external&request=recommended");
@@ -934,7 +934,7 @@ pref("app.support.baseURL", "https://support.mozilla.org/1/firefox/%VERSION%/%OS
 pref("app.support.e10sAccessibilityUrl", "https://support.mozilla.org/1/firefox/%VERSION%/%OS%/%LOCALE%/accessibility-ppt");
 
 // base url for web-based feedback pages
-pref("app.feedback.baseURL", "https://forum.palemoon.org/viewforum.php?f=61");
+pref("app.feedback.baseURL", "https://powerfox.org");
 
 // Name of alternate about: page for certificate errors (when undefined, defaults to about:neterror)
 pref("security.alternate_certificate_error_page", "certerror");
