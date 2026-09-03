@@ -26,4 +26,5 @@ This directory contains a minimal, built-in userscript loader used to ship polyf
 ## Adding new polyfills
 1. Drop a `*.user.js` file into `bundled-scripts/` with the appropriate header.
 2. List it in `moz.build` under `FINAL_TARGET_FILES['internal-userscripts']`.
-3. The loader will inject it automatically when enabled.
+3. Register it in `components/internaluserscripts.js` (`_inject` loads each bundled script by explicit chrome URL; it does not scan the directory).
+4. The loader will inject it into pages when enabled.

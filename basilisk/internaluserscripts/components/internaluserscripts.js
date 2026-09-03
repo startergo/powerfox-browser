@@ -184,6 +184,18 @@ InternalUserscriptsService.prototype = {
 
     try {
       Services.scriptloader.loadSubScript(
+        "chrome://internaluserscripts/content/bundled-scripts/dommatrix-transformlist-polyfill.user.js",
+        contentWin,
+      );
+      if (contentWin.__internalUserscriptsDOMMatrixTransformListPolyfill) {
+        logPolyfill("DOMMatrix transform list constructor", "bundled");
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    try {
+      Services.scriptloader.loadSubScript(
         "chrome://internaluserscripts/content/bundled-scripts/webauthn-microsoft-shim.user.js",
         contentWin,
       );
