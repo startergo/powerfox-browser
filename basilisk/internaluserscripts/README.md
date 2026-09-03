@@ -8,6 +8,7 @@ This directory contains a minimal, built-in userscript loader used to ship polyf
 - The only default pref is `browser.internal-userscripts.enabled` (default: true). Toggle to disable all injection.
 
 ## Bundled polyfills
+- `dommatrix-transformlist-polyfill.user.js`: wraps the `DOMMatrix` and `DOMMatrixReadOnly` string constructors to accept full CSS transform lists (`none`, 3D functions such as `translate3d()`/`matrix3d()`, and `px`/angle units) when the native parser only understands unitless SVG 1.1 syntax, which broke scroll-animation libraries on sites like apple.com. It exposes `window.__internalUserscriptsDOMMatrixTransformListPolyfill = true` for verification.
 - `elementfrompoint-finite-polyfill.user.js`: wraps `Document.elementFromPoint()` and `Document.elementsFromPoint()` to return `null`/`[]` when coordinates are not finite, avoiding page-breaking `TypeError`s from non-finite inputs. It exposes `window.__internalUserscriptsElementFromPointFinitePolyfill = true` for verification.
 - `getanimations-polyfill.user.js`: minimal `getAnimations()` shim for `Document`, `Element`, and `CSSPseudoElement` that returns an empty array when native support is unavailable. It exposes `window.__internalUserscriptsGetAnimationsPolyfill = true` for verification.
 - `imagedecode-polyfill.user.js`: best-effort `HTMLImageElement.decode()` shim that resolves on load and rejects on error. It exposes `window.__internalUserscriptsImageDecodePolyfill = true` for verification.
