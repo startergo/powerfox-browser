@@ -11,6 +11,13 @@ on:
   push:
     branches: ["main"]
 
+# Authenticate every gh/cli api.github.com call in the job. Anonymous API
+# requests from shared runner IPs hit the 60/hr rate limit (seen failing the
+# ffmpeg release lookup); the per-run token raises it far past anything a
+# build does.
+env:
+  GH_TOKEN: ${{ github.token }}
+
 jobs:
   build-powerfox:
     runs-on: macos-26
@@ -265,7 +272,8 @@ jobs:
           python3 tools/patch_audiounit_binds.py "$APP_SRC/Contents/MacOS/XUL"
 
           # Bundle FFmpeg dylibs (H.264/AAC via libavcodec) from the public
-          # powerfox-ffmpeg-enabler release — no token required. Mirrors the
+          # powerfox-ffmpeg-enabler release (GH_TOKEN above authenticates
+          # gh's API lookups). Mirrors the
           # upstream workflow's ffmpeg step for the 10.6 x86_64 target.
           # Zip layout: 10.6-x86_64/{libavcodec.61.dylib,libavutil.59.dylib}.
           gh release download ffmpeg-7.1.5 -p "10.6-x86_64.zip" \
