@@ -21,6 +21,7 @@
 * Fixed GitHub website issues through built-in Private Elements extension. Thank you to Private Elements developers for their contributions
 * Fixed apple.com gallery issues through built-in DOMMatrix transform list polyfill
 * Implemented calc() support in SVG length attributes such as width and height
+* Quietened built-in polyfill loading messages; per-polyfill console logs now require `browser.internal-userscripts.log-loaded` (load failures always report to the error console)
 * Fixed various browser UI issues
 * Updated FFmpeg library to 7.1.5
 * Updated NSS security library to 3.90.13 (UXP)

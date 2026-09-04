@@ -3,3 +3,4 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 pref("browser.internal-userscripts.enabled", true);
+pref("browser.internal-userscripts.log-loaded", false);

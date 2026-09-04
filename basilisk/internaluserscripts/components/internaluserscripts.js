@@ -17,6 +17,11 @@ const { Services } = Cu.import("resource://gre/modules/Services.jsm", {});
 const { XPCOMUtils } = Cu.import("resource://gre/modules/XPCOMUtils.jsm", {});
 
 const PREF_ENABLED = "browser.internal-userscripts.enabled";
+// When true, each successfully injected polyfill logs an info line to the
+// page console. Default false: the messages landed in every site's console
+// (and every iframe's), which is noise for users and a distinctive
+// fingerprint string. Failures always report to the error console.
+const PREF_LOG_LOADED = "browser.internal-userscripts.log-loaded";
 
 function InternalUserscriptsService() {
   this.wrappedJSObject = this;
@@ -118,7 +123,14 @@ InternalUserscriptsService.prototype = {
       } catch (e) {}
     } catch (e) {}
     let contentWin = win.wrappedJSObject || win;
+    let logLoaded = false;
+    try {
+      logLoaded = Services.prefs.getBoolPref(PREF_LOG_LOADED, false);
+    } catch (e) {}
     let logPolyfill = function (name, source) {
+      if (!logLoaded) {
+        return;
+      }
       try {
         if (
           contentWin.console &&
@@ -141,7 +153,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("Intl.DisplayNames", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -153,7 +165,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("Intl.ListFormat", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -167,7 +179,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("Intl.RelativeTimeFormat.formatToParts", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -179,7 +191,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("Intl.Segmenter", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -191,7 +203,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("DOMMatrix transform list constructor", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -203,7 +215,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("WebAuthn Microsoft unsupported shim", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -215,7 +227,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("Document.elementFromPoint finite-args shim", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -227,7 +239,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("getAnimations", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -239,7 +251,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("HTMLImageElement.decode", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -251,7 +263,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("TransformStream", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -263,7 +275,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("TextEncoderStream", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -275,7 +287,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("TextDecoderStream", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -287,7 +299,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("ReadableStream.pipeTo", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
 
     try {
@@ -299,7 +311,7 @@ InternalUserscriptsService.prototype = {
         logPolyfill("ReadableStream.pipeThrough", "bundled");
       }
     } catch (e) {
-      // ignore
+      Cu.reportError("[internal userscripts] Failed to load polyfill: " + e);
     }
   },
 };

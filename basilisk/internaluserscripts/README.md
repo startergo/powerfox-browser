@@ -5,7 +5,7 @@ This directory contains a minimal, built-in userscript loader used to ship polyf
 ## How it works
 - The XPCOM component `@internaluserscripts.mozdev.org/service;1` observes document creation and, when `browser.internal-userscripts.enabled` is true, injects bundled polyfill scripts into each page.
 - Bundled scripts live in `basilisk/internaluserscripts/bundled-scripts/` and are packaged into the app. They are loaded in the page principal and can override missing APIs.
-- The only default pref is `browser.internal-userscripts.enabled` (default: true). Toggle to disable all injection.
+- Prefs: `browser.internal-userscripts.enabled` (default: true) toggles all injection; `browser.internal-userscripts.log-loaded` (default: false) enables an info line in the page console per injected polyfill. Polyfill load failures always report to the browser error console.
 
 ## Bundled polyfills
 - `dommatrix-transformlist-polyfill.user.js`: wraps the `DOMMatrix` and `DOMMatrixReadOnly` string constructors to accept full CSS transform lists (`none`, 3D functions such as `translate3d()`/`matrix3d()`, and `px`/angle units) when the native parser only understands unitless SVG 1.1 syntax, which broke scroll-animation libraries on sites like apple.com. It exposes `window.__internalUserscriptsDOMMatrixTransformListPolyfill = true` for verification.
